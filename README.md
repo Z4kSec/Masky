@@ -5,9 +5,9 @@
 
 Masky is a python library providing an alternative way to remotely dump domain users' credentials thanks to an ADCS. A command line tool has been built on top of this library in order to easily gather PFX, NT hashes and CCACHE on a larger scope.
 
-This tool does not exploit any new vulnerability. Indeed, it only take advantage on legit Windows and Active Directory features. A blog post was published to detail the implemented technics and how the Masky works.
+This tool does not exploit any new vulnerability and does not work by dumping the LSASS process memory. Indeed, it only takes advantage of legitimate Windows and Active Directory features (token impersonation, certificate authentication via kerberos & NT hashes retrieval via PKINIT). A blog post was published to detail the implemented technics and how Masky works.
 
-Masky source code is largely based on the amazing [Certify](https://github.com/GhostPack/Certify) and [Certipy](https://github.com/ly4k/Certipy) tools. I really thanks their authors for the associated research regarding offensive exploitation technics against ADCS (see. Acknowledgement section). 
+Masky source code is largely based on the amazing [Certify](https://github.com/GhostPack/Certify) and [Certipy](https://github.com/ly4k/Certipy) tools. I really thanks their authors for the researches regarding offensive exploitation technics against ADCS (see. Acknowledgement section). 
 
 ## Installation
 
@@ -16,7 +16,9 @@ Masky python3 library and its associated CLI can be simply installed via the pub
 pip install masky
 ```
 
-Moreover, the Masky agent in C# can be compiled via a Visual Studio project located in `agent/Masky.sln`. It would requires `.NET Framework 4` to be built.
+The Masky agent executable is already included within the PyPi package.
+
+Moreover, if you need to modify the agent, the C# code can be recompiled via a Visual Studio project located in `agent/Masky.sln`. It would requires `.NET Framework 4` to be built.
 
 ## Usage
 
@@ -99,7 +101,7 @@ def dump_nt_hashes():
     password = getpass()
 
     # Create a Masky instance with these credentials
-    m = masky(ca, user, dc_ip=dc_ip, domain=domain, password=password)
+    m = masky(ca=ca, user=user, dc_ip=dc_ip, domain=domain, password=password)
 
     # Set a target and run Masky against it
     target = "192.168.23.130"
