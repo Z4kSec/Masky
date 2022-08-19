@@ -5,7 +5,7 @@
 
 Masky is a python library providing an alternative way to remotely dump domain users' credentials thanks to an ADCS. A command line tool has been built on top of this library in order to easily gather PFX, NT hashes and CCACHE on a larger scope.
 
-This tool does not exploit any new vulnerability and does not work by dumping the LSASS process memory. Indeed, it only takes advantage of legitimate Windows and Active Directory features (token impersonation, certificate authentication via kerberos & NT hashes retrieval via PKINIT). A blog post was published to detail the implemented technics and how Masky works.
+This tool does not exploit any new vulnerability and does not work by dumping the LSASS process memory. Indeed, it only takes advantage of legitimate Windows and Active Directory features (token impersonation, certificate authentication via kerberos & NT hashes retrieval via PKINIT). A [blog post](https://z4ksec.github.io/posts/masky-release-v0.0.3/) was published to detail the implemented technics and how Masky works.
 
 Masky source code is largely based on the amazing [Certify](https://github.com/GhostPack/Certify) and [Certipy](https://github.com/ly4k/Certipy) tools. I really thanks their authors for the researches regarding offensive exploitation technics against ADCS (see. Acknowledgement section). 
 
@@ -88,7 +88,7 @@ Results:
 Below is a simple script using the Masky library to collect secrets of running domain user sessions from a remote target.
 
 ```python
-from masky import masky
+from masky import Masky
 from getpass import getpass
 
 
@@ -101,7 +101,7 @@ def dump_nt_hashes():
     password = getpass()
 
     # Create a Masky instance with these credentials
-    m = masky(ca=ca, user=user, dc_ip=dc_ip, domain=domain, password=password)
+    m = Masky(ca=ca, user=user, dc_ip=dc_ip, domain=domain, password=password)
 
     # Set a target and run Masky against it
     target = "192.168.23.130"
