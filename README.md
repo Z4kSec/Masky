@@ -146,7 +146,7 @@ Please look at the `masky\lib\results.py` module to check the methods and attrib
 - [Will Schroeder](https://twitter.com/harmj0y) and [Lee Christensen](https://twitter.com/tifkin_) for the [Certify](https://github.com/GhostPack/Certify) tool and the [Certified Pre-Owned](https://www.specterops.io/assets/resources/Certified_Pre-Owned.pdf) article
 - [Dirk-jan](https://twitter.com/_dirkjan) for the [PKINITtools](https://github.com/dirkjanm/PKINITtools) and its [ADCS NTLM relay](https://dirkjanm.io/ntlm-relaying-to-ad-certificate-services/) article
 - [SecureAuthCorp](https://github.com/SecureAuthCorp) and the associated contributors for the [Impacket](https://github.com/SecureAuthCorp/impacket) library
-- [Pixis](https://github.com/Hackndo/LSASSy) for the tool [LSASSy](https://github.com/Hackndo/LSASSy)
+- [Pixis](https://twitter.com/HackAndDo) for the tool [Lsassy](https://github.com/Hackndo/Lsassy)
 - Incognito tool and its [Metasploit implementation](https://github.com/rapid7/metasploit-payloads/blob/master/c/meterpreter/source/extensions/incognito/)
 - [S3cur3Th1sSh1t](https://twitter.com/ShitSecure) for the tool [SharpImpersonation](https://github.com/S3cur3Th1sSh1t/SharpImpersonation) and the [associated article](https://s3cur3th1ssh1t.github.io/SharpImpersonation-Introduction/)
 - McAfee for their article regarding the [token impersonation techniques](https://www.mcafee.com/enterprise/en-us/assets/reports/rp-access-token-theft-manipulation-attacks.pdf)
