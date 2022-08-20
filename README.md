@@ -3,7 +3,7 @@
 [![PyPI version](https://badge.fury.io/py/masky.svg)](https://badge.fury.io/py/masky)
 [![Twitter](https://img.shields.io/twitter/follow/_ZakSec?label=Zak&style=social)](https://twitter.com/intent/follow?screen_name=_ZakSec)
 
-Masky is a python library providing an alternative way to remotely dump domain users' credentials thanks to an ADCS. A command line tool has been built on top of this library in order to easily gather PFX, NT hashes and CCACHE on a larger scope.
+Masky is a python library providing an alternative way to remotely dump domain users' credentials thanks to an ADCS. A command line tool has been built on top of this library in order to easily gather PFX, NT hashes and TGT on a larger scope.
 
 This tool does not exploit any new vulnerability and does not work by dumping the LSASS process memory. Indeed, it only takes advantage of legitimate Windows and Active Directory features (token impersonation, certificate authentication via kerberos & NT hashes retrieval via PKINIT). A [blog post](https://z4ksec.github.io/posts/masky-release-v0.0.3/) was published to detail the implemented technics and how Masky works.
 
@@ -146,5 +146,7 @@ Please look at the `masky\lib\results.py` module to check the methods and attrib
 - [Will Schroeder](https://twitter.com/harmj0y) and [Lee Christensen](https://twitter.com/tifkin_) for the [Certify](https://github.com/GhostPack/Certify) tool and the [Certified Pre-Owned](https://www.specterops.io/assets/resources/Certified_Pre-Owned.pdf) article
 - [Dirk-jan](https://twitter.com/_dirkjan) for the [PKINITtools](https://github.com/dirkjanm/PKINITtools) and its [ADCS NTLM relay](https://dirkjanm.io/ntlm-relaying-to-ad-certificate-services/) article
 - [SecureAuthCorp](https://github.com/SecureAuthCorp) and the associated contributors for the [Impacket](https://github.com/SecureAuthCorp/impacket) library
-- [Pixis](https://github.com/Hackndo/lsassy) for the tool [Lsassy](https://github.com/Hackndo/lsassy)
+- [Pixis](https://github.com/Hackndo/LSASSy) for the tool [LSASSy](https://github.com/Hackndo/LSASSy)
 - Incognito tool and its [Metasploit implementation](https://github.com/rapid7/metasploit-payloads/blob/master/c/meterpreter/source/extensions/incognito/)
+- [S3cur3Th1sSh1t](https://twitter.com/ShitSecure) for the tool [SharpImpersonation](https://github.com/S3cur3Th1sSh1t/SharpImpersonation) and the [associated article](https://s3cur3th1ssh1t.github.io/SharpImpersonation-Introduction/)
+- McAfee for their article regarding the [token impersonation techniques](https://www.mcafee.com/enterprise/en-us/assets/reports/rp-access-token-theft-manipulation-attacks.pdf)
