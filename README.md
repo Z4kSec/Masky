@@ -7,7 +7,7 @@ Masky is a python library providing an alternative way to remotely dump domain u
 
 This tool does not exploit any new vulnerability and does not work by dumping the LSASS process memory. Indeed, it only takes advantage of legitimate Windows and Active Directory features (token impersonation, certificate authentication via kerberos & NT hashes retrieval via PKINIT). A [blog post](https://z4ksec.github.io/posts/masky-release-v0.0.3/) was published to detail the implemented technics and how Masky works.
 
-Masky source code is largely based on the amazing [Certify](https://github.com/GhostPack/Certify) and [Certipy](https://github.com/ly4k/Certipy) tools. I really thanks their authors for the researches regarding offensive exploitation technics against ADCS (see. [Acknowledgments section](#acknowledgements)). 
+Masky source code is largely based on the amazing [Certify](https://github.com/GhostPack/Certify) and [Certipy](https://github.com/ly4k/Certipy) tools. I really thanks their authors for the researches regarding offensive exploitation technics against ADCS (see. [Acknowledgments section](#acknowledgments)). 
 
 ## Installation
 
