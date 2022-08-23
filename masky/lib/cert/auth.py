@@ -131,12 +131,13 @@ class Authenticate:
             ):
                 logger.warn(
                     (
-                        "The provided domain does not match the identification "
-                        "found in the provided certificate: %s - %s"
-                        ", attempting to continue..."
+                        f"The provided domain does not match the identification "
+                        f"found in the provided certificate: %s - %s"
+                        f", attempting to use '{self.user.domain}' as domain..."
                     )
                     % (repr(domain), repr(cert_domain))
                 )
+                domain = self.user.domain
 
         if not all([username, domain]) and not is_key_credential:
             logger.error(
