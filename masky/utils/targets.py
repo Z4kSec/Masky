@@ -23,7 +23,7 @@ class CIDR:
             for ip in list(ipaddress.ip_network(self.target, False).hosts()):
                 yield str(ip)
         except ValueError as e:
-            logger.warning(f"Cannot parse the CIDR '{self.target}': {e}")
+            logger.warn(f"Cannot parse the CIDR '{self.target}': {e}")
             return []
 
 

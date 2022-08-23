@@ -37,13 +37,15 @@ class Masky:
             self.__dc_target = self.__dc_ip
         if not self.__dc_target:
             logger.error(
-                "The provided domain cannot be resolved, please provide the DC IP address"
+                f"The provided domain '{self.__domain}' cannot be resolved, please set the full FQDN or provide the DC IP address"
             )
             return False
         return True
 
     def __process_certificate(self, user_data):
-        certipy_auth = Authenticate(self.__dc_ip, user_data, False, False)
+        certipy_auth = Authenticate(
+            self.__domain, self.__dc_ip, user_data, False, False
+        )
         if certipy_auth.authenticate():
             return True
         return False
