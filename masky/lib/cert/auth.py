@@ -125,9 +125,8 @@ class Authenticate:
             if cert_domain:
                 domain = cert_domain
 
-            if (
-                domain.lower() != cert_domain.lower()
-                and not cert_domain.lower().startswith(domain.lower().rstrip(".") + ".")
+            if domain.lower() != self.user.domain.lower() and not domain.startswith(
+                self.user.domain.lower().lower().rstrip(".") + "."
             ):
                 logger.warn(
                     (

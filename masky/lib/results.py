@@ -33,10 +33,13 @@ class MaskyResults:
             logger.error(
                 f"The provided CA server seems to be invalid or unreachable, please check its value"
             )
-        elif "Empty Certificate for the user".lower() in self.errors.lower():
+        elif (
+            "Empty Certificate for the user".lower() in self.errors.lower()
+            and not self.json_data
+        ):
             self.errors = ""
             logger.error(
-                f"Fail to retrieve a PEM from the provided certificate name, please check its value"
+                f"Fail to retrieve a PEM from the provided template name, please check its value"
             )
         elif data != b"\r\n":
             logger.debug(

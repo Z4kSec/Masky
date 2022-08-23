@@ -39,3 +39,4 @@ agent/.vs/
 agent/Masky/bin/
 agent/Masky/obj/
 agent/packages/
+test/
