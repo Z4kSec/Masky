@@ -62,6 +62,7 @@ class Console:
         masky = Masky(
             ca=self.__opts.ca,
             dc_ip=self.__opts.dc_ip,
+            template=self.__opts.template,
             domain=self.__opts.domain,
             user=self.__opts.user,
             password=self.__opts.password,

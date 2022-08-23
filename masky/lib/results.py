@@ -23,8 +23,21 @@ class MaskyResults:
 
     def parse_agent_errors(self, data):
         self.errors = str(data, "UTF-8")
-        if "The RPC server is unavailable".lower() in self.errors.lower():
+        if "The parameter is incorrect".lower() in self.errors.lower():
             self.errors = ""
+            logger.error(
+                f"The provided CA name seems to be invalid, please check its value"
+            )
+        elif "The RPC server is unavailable".lower() in self.errors.lower():
+            self.errors = ""
+            logger.error(
+                f"The provided CA server seems to be invalid or unreachable, please check its value"
+            )
+        elif "Empty Certificate for the user".lower() in self.errors.lower():
+            self.errors = ""
+            logger.error(
+                f"Fail to retrieve a PEM from the provided certificate name, please check its value"
+            )
         elif data != b"\r\n":
             logger.debug(
                 f"The Masky agent execution failed due to the following errors:\n{self.errors}"

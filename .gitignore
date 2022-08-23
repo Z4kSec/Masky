@@ -35,3 +35,7 @@ ENV/
 env.bak/
 venv.bak/
 .vscode/
+agent/.vs/
+agent/Masky/bin/
+agent/Masky/obj/
+agent/packages/

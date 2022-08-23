@@ -13,6 +13,7 @@ class Masky:
         self,
         ca,
         user,
+        template="User",
         domain=".",
         password=None,
         hashes=None,
@@ -20,6 +21,7 @@ class Masky:
         dc_ip=None,
     ):
         self.__ca = ca
+        self.__template = template
         self.__domain = domain
         self.__user = user
         self.__password = password
@@ -69,7 +71,7 @@ class Masky:
         )
         rslt = None
         try:
-            rslt = s.exec_masky(target, self.__ca)
+            rslt = s.exec_masky(target, self.__ca, self.__template)
         except:
             return rslt
         if not rslt or not rslt.users:

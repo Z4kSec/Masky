@@ -11,6 +11,7 @@ logger = logging.getLogger("masky")
 class Options:
     def __init__(self, cli_parser):
         self.ca = cli_parser.certificate_authority
+        self.template = cli_parser.template
         self.dc_ip = cli_parser.dc_ip
         self.domain = cli_parser.domain
         self.user = cli_parser.user
@@ -160,6 +161,13 @@ def get_cli_args():
         action="store",
         help="Certificate Authority Name (SERVER\CA_NAME)",
         required=True,
+    )
+    group_connect.add_argument(
+        "-T",
+        "--template",
+        action="store",
+        default="User",
+        help="Template name allowing users to authenticate with (default: User)",
     )
 
     # Results attributes

@@ -66,10 +66,15 @@ namespace Masky
         {
             try
             {
-                StreamWriter outStream = getOutputStream(args[1]);
-                setDebugFile(args[2]);
+                string ca = args[0];
+                string template = args[1];
+                string output_file = args[2];
+                string debug_file = args[3];
+
+                StreamWriter outStream = getOutputStream(output_file);
+                setDebugFile(debug_file);
                 Impersonate impersonate = new Impersonate();
-                Cert cert = new Cert(args[0]);
+                Cert cert = new Cert(ca, template);
                 Action action = cert.GetCertUser;
                 impersonate.Run(action);
                 WriteResultsInFile(cert.spoofedUsers, outStream);
