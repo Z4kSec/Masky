@@ -38,6 +38,7 @@ namespace Masky {
             bool isLocal = accountName.ToUpper().Contains(strMachineName.ToUpper());
             if (accountName.ToUpper().Contains("NT AUTHORITY\\")
              || accountName.ToUpper().Contains("WINDOW MANAGER\\")
+             || accountName.ToUpper().Contains("NT SERVICE\\")
              || accountName.ToUpper().Contains("HOST\\")) {
                 return true;
             }

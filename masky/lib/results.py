@@ -41,7 +41,10 @@ class MaskyResults:
             logger.error(
                 f"Fail to retrieve a PEM from the provided template name, please check its value"
             )
-        elif data != b"\r\n":
+        elif (
+            data != b"\r\n"
+            and not "Empty Certificate for the user".lower() in self.errors.lower()
+        ):
             logger.debug(
                 f"The Masky agent execution failed due to the following errors:\n{self.errors}"
             )
