@@ -79,6 +79,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArgParser.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Tokens\Impersonate.cs" />
     <Compile Include="Tokens\Interop.cs" />

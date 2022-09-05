@@ -271,7 +271,7 @@ class Smb:
             scmr.SERVICE_NO_CHANGE,
             scmr.SERVICE_DEMAND_START,
             scmr.SERVICE_ERROR_IGNORE,
-            f'{self.__masky_remote_path} "{ca}" "{template}" "{self.__output_filename}" "{self.__error_filename}"',
+            f'{self.__masky_remote_path} /ca:"{ca}" /template:"{template}" /output:"{self.__results_remote_path}" /debug:"{self.__errors_remote_path}"',
             NULL,
             NULL,
             NULL,
