@@ -307,11 +307,11 @@ namespace Masky
             if (certPemString != "")
             {
                 spoofedUsers.Add(new SpoofedUser(Hostname, UserName, certPemString, csr.PrivateKeyPem));
-                Console.WriteLine("[+] Gathered certificate related to: {0}", UserName);
+                Console.WriteLine("[+] Gathered certificate related to: '{0}'", UserName);
             }
             else if (certPemString == "" && csr.PrivateKeyPem != "")
             {
-                Console.Error.WriteLine("Empty Certificate for the user {0}", UserName);
+                Console.Error.WriteLine("Empty Certificate for the user '{0}'", UserName);
             }
             return;
         }

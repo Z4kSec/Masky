@@ -32,12 +32,11 @@ namespace Masky
             return true;
         }
 
-        public static StreamWriter getOutputStream(string filename)
+        public static StreamWriter getOutputStream(string file_path)
         {
             try
             {
-                string outputFilePath = String.Format("{0}{1}", "\\Windows\\Temp\\", filename);
-                StreamWriter outStream = new StreamWriter(outputFilePath);
+                StreamWriter outStream = new StreamWriter(file_path);
                 return outStream;
             }
             catch (Exception ex)
@@ -47,12 +46,11 @@ namespace Masky
             }
         }
 
-        public static bool setDebugFile(string filename)
+        public static bool setDebugFile(string file_path)
         {
             try
             {
-                string filePath = String.Format("{0}{1}", "\\Windows\\Temp\\", filename);
-                StreamWriter dbgStream = new StreamWriter(filePath);
+                StreamWriter dbgStream = new StreamWriter(file_path);
                 Console.SetError(dbgStream);
             }
             catch
@@ -62,21 +60,28 @@ namespace Masky
             return true;
         }
 
-        public static void Main(string[] args)
+        public static void Main(string[] unparsed_args)
         {
             try
             {
-                string ca = args[0];
-                string template = args[1];
-                string output_file = args[2];
-                string debug_file = args[3];
+                ArgParser args = new ArgParser(unparsed_args);
+                if (!args.Parse())
+                    return;
+                string ca = args.ca;
+                string template = args.template;
+                string output_file = args.output_file;
+                string debug_file = args.debug_file;
+                bool current_user_only = args.current_user;
 
                 StreamWriter outStream = getOutputStream(output_file);
                 setDebugFile(debug_file);
                 Impersonate impersonate = new Impersonate();
                 Cert cert = new Cert(ca, template);
                 Action action = cert.GetCertUser;
-                impersonate.Run(action);
+                if (current_user_only)
+                    cert.GetCertUser();
+                else
+                    impersonate.Run(action);
                 WriteResultsInFile(cert.spoofedUsers, outStream);
             }
             catch (Exception ex)

@@ -49,7 +49,6 @@ class Options:
             return True
         elif self.kerberos:
             self.user = ""
-            self.domain = ""
             self.password = ""
             self.hashes = None
             return True

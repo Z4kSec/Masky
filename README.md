@@ -139,6 +139,26 @@ A `MaskyResults` object containing a list of `User` objects is returned after a 
 
 Please look at the `masky\lib\results.py` module to check the methods and attributes provided by these two classes.
 
+### Standalone Masky agent
+
+From the Masky version 0.0.5, the standalone executable agent can now easily be ran without the Python CLI.
+
+Here are the arguments:
+```
+$> .\Masky.exe /ca:'CA SERVER\CA NAME' (/template:User) (/currentUser) (/output:./output.txt) (/debug:./debug.txt)
+```
+
+The `/ca` parameter is mandatory as for the Python CLI. Moreover, the `/currentUser` argument has been added to avoir running token impersonation. Indeed, a simple certificate request will be performed in the current user context, based on the provided template (`template`). The `/output` and `/debug` parameters allow to specify the path where will be created the files.
+
+The default values are the following:
+- currentUser: false (aka. impersonation is enabled);
+- template: User;
+- output: ./Masky_results.txt
+- debug: ./Masky_debug.txt
+
+<p align="center">
+  <img src="./assets/masky_agent_standalone.png" alt="Masky standalone agent demo" />
+</p>
 
 ## Acknowledgments
 

@@ -38,9 +38,6 @@ from .certificate import (
     get_object_sid_from_certificate,
     hash_digest,
     hashes,
-    load_pfx,
-    rsa,
-    x509,
 )
 from .pkinit import PA_PK_AS_REP, Enctype, KDCDHKeyInfo, build_pkinit_as_req
 
@@ -113,7 +110,7 @@ class Authenticate:
                     cert_username.lower(),
                     cert_username.lower() + "$",
                 ]:
-                    logger.warn(
+                    logger.debug(
                         (
                             "The provided username does not match the identification "
                             "found in the provided certificate: %s - %s"
@@ -128,13 +125,13 @@ class Authenticate:
             if domain.lower() != self.user.domain.lower() and not domain.startswith(
                 self.user.domain.lower().lower().rstrip(".") + "."
             ):
-                logger.warn(
+                logger.debug(
                     (
                         f"The provided domain does not match the identification "
                         f"found in the provided certificate: %s - %s"
                         f", attempting to use '{self.user.domain}' as domain..."
                     )
-                    % (repr(domain), repr(cert_domain))
+                    % (repr(domain), repr(self.user.domain))
                 )
                 domain = self.user.domain
 
@@ -168,6 +165,7 @@ class Authenticate:
         as_req, diffie = build_pkinit_as_req(username, domain, self.key, self.cert)
 
         try:
+            logger.debug(f"Getting a TGT via the following KDC IP: {self.dc_ip}")
             tgt = sendReceive(encoder.encode(as_req), domain, self.dc_ip)
         except KerberosError as e:
             if "KDC_ERR_CLIENT_NAME_MISMATCH" in str(e) and not is_key_credential:
