@@ -158,13 +158,6 @@ class DirtyDH:
         self.dh_nonce = os.urandom(32)
 
     @staticmethod
-    def from_params(p, g):
-        dd = DirtyDH()
-        dd.p = p
-        dd.g = g
-        return dd
-
-    @staticmethod
     def from_dict(dhp):
         dd = DirtyDH()
         dd.p = dhp["p"]
@@ -247,13 +240,9 @@ def sign_authpack(
         }
     )
 
-    signer_info["digest_algorithm"] = asn1algos.DigestAlgorithm(
-        digest_algorithm
-    )
+    signer_info["digest_algorithm"] = asn1algos.DigestAlgorithm(digest_algorithm)
     signer_info["signed_attrs"] = [
-        asn1cms.CMSAttribute(
-            {"type": "content_type", "values": ["1.3.6.1.5.2.3.1"]}
-        ),
+        asn1cms.CMSAttribute({"type": "content_type", "values": ["1.3.6.1.5.2.3.1"]}),
         asn1cms.CMSAttribute(
             {
                 "type": "message_digest",
@@ -276,16 +265,12 @@ def sign_authpack(
 
     signed_data = {}
     signed_data["version"] = "v3"
-    signed_data["digest_algorithms"] = [
-        asn1algos.DigestAlgorithm(digest_algorithm)
-    ]
+    signed_data["digest_algorithms"] = [asn1algos.DigestAlgorithm(digest_algorithm)]
     signed_data["encap_content_info"] = asn1cms.EncapsulatedContentInfo(
         enscapsulated_content_info
     )
     signed_data["certificates"] = [cert]
-    signed_data["signer_infos"] = asn1cms.SignerInfos(
-        [asn1cms.SignerInfo(signer_info)]
-    )
+    signed_data["signer_infos"] = asn1cms.SignerInfos([asn1cms.SignerInfo(signer_info)])
 
     content_info = {}
     content_info["content_type"] = "1.2.840.113549.1.7.2"

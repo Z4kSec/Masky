@@ -1,3 +1,4 @@
+import re
 import json
 import logging
 from .cert.misc import process_pfx
@@ -23,6 +24,22 @@ class MaskyResults:
 
     def parse_agent_errors(self, data):
         self.errors = str(data, "UTF-8")
+
+        if "Empty Certificate for the user".lower() in self.errors.lower():
+            users = ""
+            for user in re.findall(
+                "Empty Certificate for the user '.*'\r\n".lower(), self.errors.lower()
+            ):
+                users += user.split("'")[1] + " "
+            if users:
+                logger.warning(
+                    f"Fail to retrieve a PEM from the provided template name for the following users: {users}"
+                )
+
+        if self.json_data:
+            self.errors = ""
+            return
+
         if "The parameter is incorrect".lower() in self.errors.lower():
             self.errors = ""
             logger.error(
@@ -33,18 +50,7 @@ class MaskyResults:
             logger.error(
                 f"The provided CA server seems to be invalid or unreachable, please check its value"
             )
-        elif (
-            "Empty Certificate for the user".lower() in self.errors.lower()
-            and not self.json_data
-        ):
-            self.errors = ""
-            logger.error(
-                f"Fail to retrieve a PEM from the provided template name, please check its value"
-            )
-        elif (
-            data != b"\r\n"
-            and not "Empty Certificate for the user".lower() in self.errors.lower()
-        ):
+        elif data != b"\r\n":
             logger.debug(
                 f"The Masky agent execution failed due to the following errors:\n{self.errors}"
             )
