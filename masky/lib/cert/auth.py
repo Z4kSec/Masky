@@ -113,7 +113,7 @@ class Authenticate:
                     cert_username.lower(),
                     cert_username.lower() + "$",
                 ]:
-                    logger.warn(
+                    logger.debug(
                         (
                             "The provided username does not match the identification "
                             "found in the provided certificate: %s - %s"
@@ -128,13 +128,13 @@ class Authenticate:
             if domain.lower() != self.user.domain.lower() and not domain.startswith(
                 self.user.domain.lower().lower().rstrip(".") + "."
             ):
-                logger.warn(
+                logger.debug(
                     (
                         f"The provided domain does not match the identification "
                         f"found in the provided certificate: %s - %s"
                         f", attempting to use '{self.user.domain}' as domain..."
                     )
-                    % (repr(domain), repr(cert_domain))
+                    % (repr(domain), repr(self.user.domain))
                 )
                 domain = self.user.domain
 
