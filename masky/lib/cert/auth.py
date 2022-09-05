@@ -165,6 +165,7 @@ class Authenticate:
         as_req, diffie = build_pkinit_as_req(username, domain, self.key, self.cert)
 
         try:
+            logger.debug(f"Getting a TGT via the following KDC IP: {self.dc_ip}")
             tgt = sendReceive(encoder.encode(as_req), domain, self.dc_ip)
         except KerberosError as e:
             if "KDC_ERR_CLIENT_NAME_MISMATCH" in str(e) and not is_key_credential:
