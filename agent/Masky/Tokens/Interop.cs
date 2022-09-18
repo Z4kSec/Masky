@@ -2,8 +2,12 @@ using System;
 using System.Runtime.InteropServices;
 using DWORD = System.UInt32;
 
+using DI = DInvoke;
+using static DInvoke.Data.Native;
+using static DInvoke.DynamicInvoke.Generic;
+
 namespace Masky {
-    public class Interop  {
+    public class Interop {
         public enum TOKEN_INFORMATION_CLASS
         {
             TokenUser = 1,
@@ -89,13 +93,13 @@ namespace Masky {
             public int bInheritHandle;
         }
 
-        public enum SECURITY_IMPERSONATION_LEVEL : int{
+        public enum SECURITY_IMPERSONATION_LEVEL : int {
             SecurityAnonymous,
             SecurityIdentification,
             SecurityImpersonation,
             SecurityDelegation
         }
-        
+
         public enum TOKEN_TYPE {
             TokenPrimary = 1,
             TokenImpersonation
@@ -133,63 +137,67 @@ namespace Masky {
             LOGON_NETCREDENTIALS_ONLY  = 0x00000002    
         }
 
-        [DllImport("advapi32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool OpenProcessToken(
+        public static NTSTATUS NtOpenProcessToken(IntPtr ProcessHandle, UInt32 DesiredAccess, out IntPtr TokenHandle)
+        {
+            var stub = GetSyscallStub("ZwOpenProcessToken");
+            var ntOpenProcessToken = (Delegates.NtOpenProcessToken)Marshal.GetDelegateForFunctionPointer(stub, typeof(Delegates.NtOpenProcessToken));
+
+            return ntOpenProcessToken(
+                ProcessHandle,
+                DesiredAccess,
+                out TokenHandle);
+        }
+
+        public static bool DuplicateTokenEx(IntPtr hExistingToken, uint dwDesiredAccess, ref SECURITY_ATTRIBUTES lpTokenAttributes, SECURITY_IMPERSONATION_LEVEL ImpersonationLevel, TOKEN_TYPE TokenType, out IntPtr phNewToken)
+        {
+            var NewToken = new IntPtr();
+
+            object[] parameters = { hExistingToken, dwDesiredAccess, lpTokenAttributes, ImpersonationLevel, TokenType, NewToken };
+            var result = (bool)DynamicAPIInvoke("advapi32.dll", "DuplicateTokenEx", typeof(Delegates.DuplicateTokenEx), ref parameters);
+
+            phNewToken = (IntPtr)parameters[5];
+            return result;
+        }
+
+        public static bool SetThreadToken(IntPtr Thread, IntPtr TokenHandle)
+        {
+            object[] parameters = { Thread, TokenHandle };
+            var result = (bool)DynamicAPIInvoke("advapi32.dll", "SetThreadToken", typeof(Delegates.SetThreadToken), ref parameters);
+            return result;
+        }
+
+        public static NTSTATUS NtClose(IntPtr hObject)
+        {
+            var stub = GetSyscallStub("ZwClose");
+            var ntClose = (Delegates.NtClose)Marshal.GetDelegateForFunctionPointer(stub, typeof(Delegates.NtClose));
+
+            return ntClose(hObject);
+        }
+    }
+
+    class Delegates
+    {
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        public delegate NTSTATUS NtOpenProcessToken(
             IntPtr ProcessHandle,
             UInt32 DesiredAccess,
             out IntPtr TokenHandle);
 
-        [DllImport("advapi32.dll", CharSet=CharSet.Auto, SetLastError=true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public extern static bool DuplicateTokenEx(
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        public delegate bool DuplicateTokenEx(
             IntPtr hExistingToken,
             uint dwDesiredAccess,
-            ref SECURITY_ATTRIBUTES lpTokenAttributes,
-            SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
-            TOKEN_TYPE TokenType,
-            out IntPtr phNewToken );
+            ref Interop.SECURITY_ATTRIBUTES lpTokenAttributes,
+            Interop.SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
+            Interop.TOKEN_TYPE TokenType,
+            out IntPtr phNewToken);
 
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public extern static bool CreateProcessWithTokenW(
-            IntPtr hToken,
-            LogonFlags dwLogonFlags,
-            string lpApplicationName,
-            string lpCommandLine,
-            CreationFlags dwCreationFlags,
-            IntPtr lpEnvironment,
-            string lpCurrentDirectory,
-            [In] ref STARTUPINFO lpStartupInfo,
-            out PROCESS_INFORMATION lpProcessInformation );
-   
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool CloseHandle(IntPtr hObject);
-
-        [DllImport("advapi32.dll", SetLastError=true)]
-        public static extern bool GetTokenInformation(
-            System.IntPtr TokenHandle,
-            TOKEN_INFORMATION_CLASS TokenInformationClass,
-            IntPtr TokenInformation,
-            int TokenInformationLength,
-            out int ReturnLength);
-
-        [DllImport("advapi32", CharSet=CharSet.Auto, SetLastError=true)]
-        public static extern bool ConvertSidToStringSid(
-            IntPtr pSID,
-            out IntPtr ptrSid);
-
-        [DllImport("kernel32.dll")]
-        public static extern IntPtr LocalFree(IntPtr hMem);
-
-        [DllImport("advapi32.dll")]
-        public static extern IntPtr GetCurrentProcessToken();
-
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern Boolean SetThreadToken(
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        public delegate bool SetThreadToken(
             IntPtr Thread,
-            IntPtr TokenHandle
-        );
+            IntPtr TokenHandle);
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        public delegate NTSTATUS NtClose(IntPtr hObject);
     }
 }

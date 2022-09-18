@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Security.Principal;
 
+using static DInvoke.Data.Native;
+
 namespace Masky {
 
     public class Impersonate  {
@@ -47,19 +49,21 @@ namespace Masky {
 
         bool OpenProcess(ref Process process, ref IntPtr hProcToken) {
             try {
-                var processHandle = process.Handle;
-                var ret_open = Interop.OpenProcessToken(processHandle, Interop.TOKEN_ALL_ACCESS, out hProcToken);
-                return ret_open;               
+                if (Interop.NtOpenProcessToken(
+                    process.Handle,
+                    Interop.TOKEN_ALL_ACCESS,
+                    out hProcToken) == NTSTATUS.Success)
+                    return true;
             }
-            catch {
-                return false;
-            }
+            catch { }
+
+            return false;
         }
 
         bool DuplicateToken(ref IntPtr hProcToken, ref IntPtr NewhProcToken) {
             Interop.SECURITY_ATTRIBUTES tmp;
             tmp.bInheritHandle = 0;
-            tmp.lpSecurityDescriptor =  new IntPtr(0);
+            tmp.lpSecurityDescriptor = new IntPtr(0);
             tmp.nLength = 0;
             var ret_dup = Interop.DuplicateTokenEx(
                 hProcToken,
@@ -116,8 +120,8 @@ namespace Masky {
         }
 
         bool CloseHandles(ref IntPtr hProcToken, ref IntPtr NewhProcToken) {
-            Interop.CloseHandle(hProcToken);
-            Interop.CloseHandle(NewhProcToken);
+            Interop.NtClose(hProcToken);
+            Interop.NtClose(NewhProcToken);
             return true;
         }
 
