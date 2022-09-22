@@ -170,3 +170,4 @@ The default values are the following:
 - Incognito tool and its [Metasploit implementation](https://github.com/rapid7/metasploit-payloads/blob/master/c/meterpreter/source/extensions/incognito/)
 - [S3cur3Th1sSh1t](https://twitter.com/ShitSecure) for the tool [SharpImpersonation](https://github.com/S3cur3Th1sSh1t/SharpImpersonation) and the [associated article](https://s3cur3th1ssh1t.github.io/SharpImpersonation-Introduction/)
 - McAfee for their article regarding the [token impersonation techniques](https://www.mcafee.com/enterprise/en-us/assets/reports/rp-access-token-theft-manipulation-attacks.pdf)
+- [TheWover](https://twitter.com/therealwover) and [FuzzySecurity](https://twitter.com/fuzzysec) for their [DInvoke](https://github.com/TheWover/DInvoke) project
