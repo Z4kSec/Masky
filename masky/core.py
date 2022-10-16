@@ -19,6 +19,7 @@ class Masky:
         hashes=None,
         kerberos=False,
         dc_ip=None,
+        quiet=False,
     ):
         self.__ca = ca
         self.__template = template
@@ -29,6 +30,7 @@ class Masky:
         self.__kerberos = kerberos
         self.__dc_ip = dc_ip
         self.__dc_target = None
+        self.__quiet = quiet
 
     def __process_options(self):
         try:
@@ -53,7 +55,10 @@ class Masky:
         return False
 
     def run(self, target):
-        add_result_level()
+        if not self.__quiet:
+            add_result_level()
+            logger.disabled = True
+
         if not self.__process_options():
             return None
 
