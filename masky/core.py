@@ -57,6 +57,7 @@ class Masky:
     def run(self, target):
         if not self.__quiet:
             add_result_level()
+        else:
             logger.disabled = True
 
         if not self.__process_options():
