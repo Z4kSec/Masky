@@ -58,7 +58,7 @@ class CustomLogger(logging.Formatter):
 
 def add_result_level():
     logger = logging.getLogger("masky")
-    logging.addLevelName(0, "RESULT")
+    logging.addLevelName(25, "RESULT")
     setattr(
         logger,
         "result",

@@ -26,6 +26,7 @@ class Options:
         self.verbose = cli_parser.verbose
         self.timestamps = cli_parser.timestamps
         self.output = cli_parser.output
+        self.stealth = cli_parser.stealth
 
     def process(self):
         logger.info("Loading options...")
@@ -154,6 +155,14 @@ def get_cli_args():
         help="IP Address of the domain controller. If omitted it will use "
         "the domain part (FQDN) specified in the target parameter",
     )
+    group_auth.add_argument(
+        "-s",
+        "--stealth",
+        action="store_true",
+        default=False,
+        help="If set, the agent will be executed by modifying an existing "
+        " service (RasAuto) rather than created a random one",
+    ),
     group_connect.add_argument(
         "-ca",
         "--certificate-authority",

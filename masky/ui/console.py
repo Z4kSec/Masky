@@ -68,6 +68,8 @@ class Console:
             password=self.__opts.password,
             hashes=self.__opts.hashes,
             kerberos=self.__opts.kerberos,
+            stealth=self.__opts.stealth,
+            quiet=False,
         )
         self.__tp = ThreadPool(masky, self.__opts.targets, self.__opts.threads)
         self.__tp.start()

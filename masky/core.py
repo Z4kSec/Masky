@@ -20,6 +20,7 @@ class Masky:
         kerberos=False,
         dc_ip=None,
         quiet=False,
+        stealth=False,
     ):
         self.__ca = ca
         self.__template = template
@@ -31,6 +32,7 @@ class Masky:
         self.__dc_ip = dc_ip
         self.__dc_target = None
         self.__quiet = quiet
+        self.__stealth = stealth
 
     def __process_options(self):
         try:
@@ -55,9 +57,8 @@ class Masky:
         return False
 
     def run(self, target):
-        if not self.__quiet:
-            add_result_level()
-        else:
+        add_result_level()
+        if self.__quiet:
             logger.disabled = True
 
         if not self.__process_options():
@@ -74,6 +75,7 @@ class Masky:
             hashes=self.__hashes,
             kerberos=self.__kerberos,
             dc_target=self.__dc_target,
+            stealth=self.__stealth,
         )
         rslt = None
         try:
@@ -87,6 +89,7 @@ class Masky:
             logger.info(f"{len(rslt.users)} user session was hijacked")
         else:
             logger.info(f"{len(rslt.users)} user sessions were hijacked")
+
         for user_data in rslt.users:
             logger.debug(
                 f"Start processing PFX of the user '{user_data.domain}\{user_data.name}'"
