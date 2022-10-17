@@ -19,7 +19,7 @@ class Masky:
         hashes=None,
         kerberos=False,
         dc_ip=None,
-        quiet=False,
+        quiet=True,
         stealth=False,
     ):
         self.__ca = ca
