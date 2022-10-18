@@ -57,6 +57,10 @@ class MaskyResults:
             err_msg = f"The Masky agent execution failed due to the following errors:\n{self.errors}"
             logger.debug(err_msg)
             self.tracker.last_error_msg = err_msg
+        else:
+            self.tracker.last_error_msg = (
+                "The Masky agent execution failed due to an unknown error"
+            )
 
     def process_data(self):
         self.hostname = self.json_data[0].get("Hostname", None)

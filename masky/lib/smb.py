@@ -232,7 +232,6 @@ class Smb:
             if rslt.errors:
                 err_msg = f"The Masky agent execution failed, enable the debugging to display the stacktrace"
                 logger.error(err_msg)
-                self.__tracker.last_error_msg = err_msg
         except:
             logger.warn("No Masky agent error file was downloaded")
         try:
