@@ -7,7 +7,8 @@ logger = logging.getLogger("masky")
 
 
 class MaskyResults:
-    def __init__(self):
+    def __init__(self, tracker):
+        self.tracker = tracker
         self.json_data = None
         self.errors = None
         self.hostname = None
@@ -42,18 +43,20 @@ class MaskyResults:
 
         if "The parameter is incorrect".lower() in self.errors.lower():
             self.errors = ""
-            logger.error(
+            err_msg = (
                 f"The provided CA name seems to be invalid, please check its value"
             )
+            logger.error(err_msg)
+            self.tracker.last_error_msg = err_msg
         elif "The RPC server is unavailable".lower() in self.errors.lower():
             self.errors = ""
-            logger.error(
-                f"The provided CA server seems to be invalid or unreachable, please check its value"
-            )
+            err_msg = f"The provided CA server seems to be invalid or unreachable, please check its value"
+            logger.error(err_msg)
+            self.tracker.last_error_msg = err_msg
         elif data != b"\r\n":
-            logger.debug(
-                f"The Masky agent execution failed due to the following errors:\n{self.errors}"
-            )
+            err_msg = f"The Masky agent execution failed due to the following errors:\n{self.errors}"
+            logger.debug(err_msg)
+            self.tracker.last_error_msg = err_msg
 
     def process_data(self):
         self.hostname = self.json_data[0].get("Hostname", None)

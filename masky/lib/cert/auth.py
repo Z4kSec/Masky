@@ -81,7 +81,8 @@ def cert_id_to_parts(id_type: str, identification: str) -> Tuple[str, str]:
 
 
 class Authenticate:
-    def __init__(self, dc_domain, dc_ip, user, no_ccache, no_hash):
+    def __init__(self, tracker, dc_domain, dc_ip, user, no_ccache, no_hash):
+        self.tracker = tracker
         self.dc_ip = dc_ip
         self.dc_domain = dc_domain
         self.user = user
@@ -136,16 +137,18 @@ class Authenticate:
                 domain = self.user.domain
 
         if not all([username, domain]) and not is_key_credential:
-            logger.error(
-                (
-                    "Username or domain is not specified, and identification "
-                    "information was not found in the certificate"
-                )
+            err_msg = (
+                "Username or domain is not specified, and identification "
+                "information was not found in the certificate"
             )
+            logger.error(err_msg)
+            self.tracker.last_error_msg = err_msg
             return False
 
         if not any([len(username), len(domain)]):
-            logger.error("Username or domain is invalid: %s\\%s" % (domain, username))
+            err_msg = "Username or domain is invalid: %s\\%s" % (domain, username)
+            logger.error(err_msg)
+            self.tracker.last_error_msg = err_msg
             return False
 
         username = username.lower()
@@ -157,9 +160,9 @@ class Authenticate:
                 try:
                     self.dc_ip = socket.gethostbyname(self.dc_domain)
                 except:
-                    logger.error(
-                        "The provided DC IP is invalid / not set and the domain could not been resolved"
-                    )
+                    err_msg = "The provided DC IP is invalid / not set and the domain could not been resolved"
+                    logger.error(err_msg)
+                    self.tracker.last_error_msg = err_msg
                     return False
 
         as_req, diffie = build_pkinit_as_req(username, domain, self.key, self.cert)
@@ -169,40 +172,34 @@ class Authenticate:
             tgt = sendReceive(encoder.encode(as_req), domain, self.dc_ip)
         except KerberosError as e:
             if "KDC_ERR_CLIENT_NAME_MISMATCH" in str(e) and not is_key_credential:
-                logger.error(
-                    ("Name mismatch between certificate and user %s" % repr(username))
-                )
+                err_msg = f"Name mismatch between certificate and user {repr(username)}"
+                logger.error(err_msg)
                 if id_type is not None:
-                    logger.error(
-                        ("Verify that the username %s matches the certificate %s: %s")
-                        % (repr(username), id_type, identification)
-                    )
+                    err_msg = f"Verify that the username {repr(username)} matches the certificate {id_type}: {identification}"
+                    logger.error(err_msg)
             elif "KDC_ERR_WRONG_REALM" in str(e) and not is_key_credential:
-                logger.error(("Wrong domain name specified %s" % repr(domain)))
+                err_msg = f"Wrong domain name specified {repr(domain)}"
+                logger.error(err_msg)
                 if id_type is not None:
-                    logger.error(
-                        ("Verify that the domain %s matches the certificate %s: %s")
-                        % (repr(domain), id_type, identification)
-                    )
+                    err_msg = f"Verify that the domain {repr(domain)} matches the certificate {id_type}: {identification}"
+                    logger.error(err_msg)
             elif "KDC_ERR_CERTIFICATE_MISMATCH" in str(e) and not is_key_credential:
-                logger.error(
-                    (
-                        "Object SID mismatch between certificate and user %s"
-                        % repr(username)
-                    )
+                err_msg = (
+                    f"Object SID mismatch between certificate and user {repr(username)}"
                 )
+                logger.error(err_msg)
                 if object_sid is not None:
-                    logger.error(
-                        ("Verify that user %s has object SID %s")
-                        % (repr(username), repr(object_sid))
-                    )
+                    err_msg = f"Verify that user {repr(username)} has object SID {repr(object_sid)}"
+                    logger.error(err_msg)
             else:
-                logger.error("Got error while trying to request TGT: %s" % str(e))
+                err_msg = f"Got error while trying to request TGT: {str(e)}"
+                logger.error(err_msg)
+            self.tracker.last_error_msg = err_msg
             return False
         except OSError:
-            logger.error(
-                "Cannot connect to the provided KDC host, please check the domain or DC IP parameters"
-            )
+            err_msg = "Cannot connect to the provided KDC host, please check the domain or DC IP parameters"
+            logger.error(err_msg)
+            self.tracker.last_error_msg = err_msg
             return False
 
         as_rep = decoder.decode(tgt, asn1Spec=AS_REP())[0]
@@ -212,7 +209,9 @@ class Authenticate:
                 pk_as_rep = PA_PK_AS_REP.load(bytes(pa["padata-value"])).native
                 break
         else:
-            logger.error("PA_PK_AS_REP was not found in AS_REP")
+            err_msg = "PA_PK_AS_REP was not found in AS_REP"
+            logger.error(err_msg)
+            self.tracker.last_error_msg = err_msg
             return False
 
         ci = cms.ContentInfo.load(pk_as_rep["dhSignedData"]).native
@@ -220,7 +219,9 @@ class Authenticate:
         key_info = sd["encap_content_info"]
 
         if key_info["content_type"] != "1.3.6.1.5.2.3.2":
-            logger.error("Unexpected value for key info content type")
+            err_msg = "Unexpected value for key info content type"
+            logger.error(err_msg)
+            self.tracker.last_error_msg = err_msg
             return False
 
         auth_data = KDCDHKeyInfo.load(key_info["content"]).native
@@ -244,7 +245,9 @@ class Authenticate:
         elif etype == Enctype.AES128:
             t_key = truncate_key(full_key, 16)
         else:
-            logger.error("Unexpected encryption type in AS_REP")
+            err_msg = "Unexpected encryption type in AS_REP"
+            logger.error(err_msg)
+            self.tracker.last_error_msg = err_msg
             return False
 
         key = Key(cipher.enctype, t_key)
@@ -398,7 +401,9 @@ class Authenticate:
 
                 buff = buff[len(info_buffer) :]
             else:
-                logger.error("Could not find credentials in PAC")
+                err_msg = "Could not find credentials in PAC"
+                logger.error(err_msg)
+                self.tracker.last_error_msg = err_msg
                 return False
 
             self.nt_hash = nt_hash

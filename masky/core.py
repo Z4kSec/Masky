@@ -3,6 +3,7 @@ import logging
 from .utils.toolbox import scan_port
 from .lib.smb import Smb
 from .lib.cert.auth import Authenticate
+from .utils.tracker import Tracker
 from .utils.logger import add_result_level
 
 logger = logging.getLogger("masky")
@@ -33,6 +34,7 @@ class Masky:
         self.__dc_target = None
         self.__quiet = quiet
         self.__stealth = stealth
+        self.__tracker = Tracker()
 
     def __process_options(self):
         try:
@@ -42,21 +44,22 @@ class Masky:
         if self.__dc_target == "0.0.0.0":
             self.__dc_target = self.__dc_ip
         if not self.__dc_target:
-            logger.error(
-                f"The provided domain '{self.__domain}' cannot be resolved, please set the full FQDN or provide the DC IP address"
-            )
+            err_msg = f"The provided domain '{self.__domain}' cannot be resolved, please set the full FQDN or provide the DC IP address"
+            logger.error(err_msg)
+            self.__tracker.last_error_msg = err_msg
             return False
         return True
 
     def __process_certificate(self, user_data):
         certipy_auth = Authenticate(
-            self.__domain, self.__dc_ip, user_data, False, False
+            self.__tracker, self.__domain, self.__dc_ip, user_data, False, False
         )
         if certipy_auth.authenticate():
             return True
         return False
 
     def run(self, target):
+        self.__tracker = Tracker()
         add_result_level()
         if self.__quiet:
             logger.disabled = True
@@ -69,6 +72,7 @@ class Masky:
             return None
 
         s = Smb(
+            self.__tracker,
             self.__domain,
             self.__user,
             password=self.__password,
@@ -82,9 +86,12 @@ class Masky:
             rslt = s.exec_masky(target, self.__ca, self.__template)
         except:
             return rslt
+
+        self.__tracker.nb_hijacked_users = len(rslt.users)
         if not rslt or not rslt.users:
             logger.info("No user session was hijacked")
             return None
+
         if len(rslt.users) == 1:
             logger.info(f"{len(rslt.users)} user session was hijacked")
         else:
@@ -103,3 +110,6 @@ class Masky:
                     f"End processing PFX of the user '{user_data.domain}\{user_data.name}'"
                 )
         return rslt
+
+    def get_last_tracker(self):
+        return self.__tracker

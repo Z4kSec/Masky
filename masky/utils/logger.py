@@ -8,8 +8,6 @@ class CustomLogger(logging.Formatter):
     """This Formatter class is used to format log in STDOUT (with colors and icon)"""
 
     def __init__(self, ts):
-        self.__ts = ts
-
         self._figures = {
             "debug": "o",
             "info": "*",
