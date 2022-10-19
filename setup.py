@@ -8,7 +8,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="masky",
-    version="0.1.0",
+    version="0.1.1",
     description="Python library with CLI allowing to remotely dump domain user credentials via an ADCS",
     long_description=README,
     long_description_content_type="text/markdown",
