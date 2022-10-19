@@ -56,7 +56,9 @@ class MaskyResults:
         elif data != b"\r\n":
             err_msg = f"The Masky agent execution failed due to the following errors:\n{self.errors}"
             logger.debug(err_msg)
-            self.tracker.last_error_msg = err_msg
+            self.tracker.last_error_msg = (
+                f"The Masky agent execution failed, probably empty certificates"
+            )
         else:
             self.tracker.last_error_msg = (
                 "The Masky agent execution failed due to an unknown error"
