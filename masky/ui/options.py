@@ -27,6 +27,7 @@ class Options:
         self.timestamps = cli_parser.timestamps
         self.output = cli_parser.output
         self.stealth = cli_parser.stealth
+        self.exe_path = cli_parser.exe
 
     def process(self):
         logger.info("Loading options...")
@@ -98,6 +99,13 @@ def get_cli_args():
         action="store",
         default=1,
         help="Threadpool size (max 15)",
+    )
+    parser.add_argument(
+        "-e",
+        "--exe",
+        action="store",
+        default=None,
+        help="Path to the masky agent executable to be deployed",
     )
     parser.add_argument(
         "targets",

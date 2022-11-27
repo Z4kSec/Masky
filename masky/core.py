@@ -22,6 +22,7 @@ class Masky:
         dc_ip=None,
         quiet=True,
         stealth=False,
+        exe_path=None,
     ):
         self.__ca = ca
         self.__template = template
@@ -34,6 +35,7 @@ class Masky:
         self.__dc_target = None
         self.__quiet = quiet
         self.__stealth = stealth
+        self._exe_path = exe_path
         self.__tracker = Tracker()
 
     def __process_options(self):
@@ -80,6 +82,7 @@ class Masky:
             kerberos=self.__kerberos,
             dc_target=self.__dc_target,
             stealth=self.__stealth,
+            exe_path=self._exe_path,
         )
         rslt = None
         try:

@@ -22,6 +22,7 @@ class Smb:
         kerberos=None,
         aeskey=None,
         stealth=False,
+        exe_path=None,
     ):
         self.__tracker = tracker
         self.__domain = domain
@@ -29,6 +30,7 @@ class Smb:
         self.__password = password
         self.__lmhash, self.__nthash = "", ""
         self.__stealth = stealth
+        self._exe_path = exe_path
 
         if hashes:
             self.__lmhash, self.__nthash = hashes.split(":")
@@ -59,7 +61,10 @@ class Smb:
         self.__masky_remote_path = f"\\Windows\\Temp\\{self.__agent_filename}"
         self.__results_remote_path = f"\\Windows\\Temp\\{self.__output_filename}"
         self.__errors_remote_path = f"\\Windows\\Temp\\{self.__error_filename}"
-        self.__masky_local_path = resource_filename("masky.bin", "Masky.exe")
+        if self._exe_path:
+            self.__masky_local_path = self._exe_path
+        else:
+            self.__masky_local_path = resource_filename("masky.bin", "Masky.exe")
         logger.debug(
             f"The Masky agent binary will be uploaded in: {self.__masky_remote_path}"
         )
