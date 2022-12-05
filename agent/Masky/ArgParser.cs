@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace Masky
 {
@@ -8,6 +9,7 @@ namespace Masky
         public string template { get; set; }
         public string output_file { get; set; }
         public string debug_file { get; set; }
+        public string file_args_path { get; set; }
         public bool current_user { get; set; }
         public string[] unparsed_args { get; set; }
 
@@ -19,14 +21,23 @@ namespace Masky
             this.output_file = "./Masky_results.txt";
             this.debug_file = "./Masky_debug.txt";
             this.current_user = false;
+            this.file_args_path = "\\Windows\\Temp\\args.txt";
         }
 
         public bool Parse()
         {
             if (this.unparsed_args.Length == 0)
             {
-                Console.WriteLine(".\\Masky.exe /ca:'CA SERVER\\CA NAME' (/template:User) (/currentUser) (/output:./output.txt) (/debug:./debug.txt)");
-                return false;
+                if (File.Exists(this.file_args_path))
+                {
+                    string fileContents = File.ReadAllText(this.file_args_path);
+                    this.unparsed_args = fileContents.Split(' ');
+                }
+                else
+                {
+                    Console.WriteLine(".\\Masky.exe /ca:'CA SERVER\\CA NAME' (/template:User) (/currentUser) (/output:./output.txt) (/debug:./debug.txt)");
+                    return false;
+                }
             }
 
             foreach (string arg in this.unparsed_args)
@@ -36,7 +47,7 @@ namespace Masky
                 int index = arg.IndexOf(":");
                 if (index > 0) {
                     cur_arg = arg.Substring(1, index - 1);
-                    cur_val = arg.Substring(index + 1);
+                    cur_val = arg.Substring(index + 1).Replace("\"", "");
                 }
                 if (arg.ToLower() == "/currentuser")
                     this.current_user = true;

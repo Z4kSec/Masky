@@ -37,3 +37,15 @@ def scan_port(host, port=445):
         return code == 0
     except socket.error:
         return False
+
+
+class FakeBufferReader:
+    string = None
+
+    def get_string(max_buff_size):
+        if FakeBufferReader.string:
+            tmp_string = FakeBufferReader.string
+            FakeBufferReader.string = None
+            return tmp_string
+        else:
+            return ""
