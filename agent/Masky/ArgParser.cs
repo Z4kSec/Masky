@@ -26,7 +26,7 @@ namespace Masky
 
         public bool Parse()
         {
-            if (this.unparsed_args.Length == 0)
+            if (this.unparsed_args.Length == 0 || (this.unparsed_args.Length == 1 && this.unparsed_args[0] == string.Empty))
             {
                 if (File.Exists(this.file_args_path))
                 {
