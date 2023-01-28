@@ -70,6 +70,7 @@ class Console:
             kerberos=self.__opts.kerberos,
             stealth=self.__opts.stealth,
             exe_path=self.__opts.exe_path,
+            file_args=self.__opts.file_args,
             quiet=False,
         )
         self.__tp = ThreadPool(masky, self.__opts.targets, self.__opts.threads)

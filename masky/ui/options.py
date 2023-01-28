@@ -28,6 +28,7 @@ class Options:
         self.output = cli_parser.output
         self.stealth = cli_parser.stealth
         self.exe_path = cli_parser.exe
+        self.file_args = cli_parser.file_args
 
     def process(self):
         logger.info("Loading options...")
@@ -101,13 +102,6 @@ def get_cli_args():
         help="Threadpool size (max 15)",
     )
     parser.add_argument(
-        "-e",
-        "--exe",
-        action="store",
-        default=None,
-        help="Path to the masky agent executable to be deployed",
-    )
-    parser.add_argument(
         "targets",
         nargs="*",
         type=str,
@@ -163,14 +157,6 @@ def get_cli_args():
         help="IP Address of the domain controller. If omitted it will use "
         "the domain part (FQDN) specified in the target parameter",
     )
-    group_auth.add_argument(
-        "-s",
-        "--stealth",
-        action="store_true",
-        default=False,
-        help="If set, the agent will be executed by modifying an existing "
-        " service (RasAuto) rather than created a random one",
-    ),
     group_connect.add_argument(
         "-ca",
         "--certificate-authority",
@@ -186,6 +172,31 @@ def get_cli_args():
         help="Template name allowing users to authenticate with (default: User)",
     )
 
+    # Custom agent
+    group_custom_agent = parser.add_argument_group("Custom agent")
+    group_custom_agent.add_argument(
+        "-e",
+        "--exe",
+        action="store",
+        default=None,
+        help="Path to a custom executable masky agent to be deployed",
+    )
+    group_custom_agent.add_argument(
+        "-fa",
+        "--file-args",
+        action="store_true",
+        default=False,
+        help="If enabled, the Masky agent will load arguments from an "
+        " automatically generated file (useful when packed or using a loader)",
+    )
+    group_custom_agent.add_argument(
+        "-s",
+        "--stealth",
+        action="store_true",
+        default=False,
+        help="If set, the agent will be executed by modifying an existing "
+        " service (RasAuto) rather than created a random one",
+    )
     # Results attributes
     group_results = parser.add_argument_group("Results")
     group_results.add_argument(

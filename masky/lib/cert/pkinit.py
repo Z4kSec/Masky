@@ -1,4 +1,5 @@
 import datetime
+import enum
 import os
 from random import getrandbits
 from typing import Tuple, Union
@@ -9,15 +10,6 @@ from asn1crypto import core as asn1core
 from asn1crypto import keys as asn1keys
 from asn1crypto import x509 as asn1x509
 from impacket.krb5 import constants
-from impacket.krb5.asn1 import (
-    AS_REQ,
-    KERB_PA_PAC_REQUEST,
-    seq_set,
-    seq_set_iter,
-)
-from impacket.krb5.types import KerberosTime, Principal
-from pyasn1.codec.der import encoder
-from pyasn1.type.univ import noValue
 
 from .certificate import (
     cert_to_der,
@@ -26,6 +18,13 @@ from .certificate import (
     rsa,
     rsa_pkcs1v15_sign,
     x509,
+)
+from .structs import (
+    KDC_REQ_BODY,
+    PrincipalName,
+    KDCOptions,
+    AS_REQ,
+    PA_PAC_REQUEST,
 )
 
 # https://github.com/dirkjanm/PKINITtools/blob/master/gettgtpkinit.py#L292
@@ -41,6 +40,23 @@ DH_PARAMS = {
     ),
     "g": 2,
 }
+
+
+class NAME_TYPE(enum.Enum):
+    UNKNOWN = 0  # (0),	-- Name type not known
+    PRINCIPAL = 1  # (1),	-- Just the name of the principal as in
+    SRV_INST = 2  # (2),	-- Service and other unique instance (krbtgt)
+    SRV_HST = 3  # (3),	-- Service with host name as instance
+    SRV_XHST = 4  # (4),	-- Service with host as remaining components
+    UID = 5  # (5),		-- Unique ID
+    X500_PRINCIPAL = 6  # (6), -- PKINIT
+    SMTP_NAME = 7  # (7),	-- Name in form of SMTP email name
+    ENTERPRISE_PRINCIPAL = 10  # (10), -- Windows 2000 UPN
+    WELLKNOWN = 11  # (11),	-- Wellknown
+    ENT_PRINCIPAL_AND_ID = -130  # (-130), -- Windows 2000 UPN and SID
+    MS_PRINCIPAL = -128  # (-128), -- NT 4 style name
+    MS_PRINCIPAL_AND_ID = -129  # (-129), -- NT style name and SID
+    NTLM = -1200  # (-1200) -- NTLM name, realm is domain
 
 
 class Enctype(object):
@@ -87,11 +103,7 @@ class ExternalPrincipalIdentifier(asn1core.Sequence):
 
 class KDCDHKeyInfo(asn1core.Sequence):
     _fields = [
-        (
-            "subjectPublicKey",
-            asn1core.BitString,
-            {"tag_type": "explicit", "tag": 0},
-        ),
+        ("subjectPublicKey", asn1core.BitString, {"tag_type": "explicit", "tag": 0}),
         ("nonce", asn1core.Integer, {"tag_type": "explicit", "tag": 1}),
         (
             "dhKeyExpiration",
@@ -107,11 +119,7 @@ class ExternalPrincipalIdentifiers(asn1core.SequenceOf):
 
 class DHRepInfo(asn1core.Sequence):
     _fields = [
-        (
-            "dhSignedData",
-            asn1core.OctetString,
-            {"tag_type": "implicit", "tag": 0},
-        ),
+        ("dhSignedData", asn1core.OctetString, {"tag_type": "implicit", "tag": 0}),
         (
             "serverDHNonce",
             DHNonce,
@@ -122,11 +130,7 @@ class DHRepInfo(asn1core.Sequence):
 
 class PA_PK_AS_REQ(asn1core.Sequence):
     _fields = [
-        (
-            "signedAuthPack",
-            asn1core.OctetString,
-            {"tag_type": "implicit", "tag": 0},
-        ),
+        ("signedAuthPack", asn1core.OctetString, {"tag_type": "implicit", "tag": 0}),
         (
             "trustedCertifiers",
             ExternalPrincipalIdentifiers,
@@ -156,6 +160,13 @@ class DirtyDH:
         self.private_key = os.urandom(32)
         self.private_key_int = int(self.private_key.hex(), 16)
         self.dh_nonce = os.urandom(32)
+
+    @staticmethod
+    def from_params(p, g):
+        dd = DirtyDH()
+        dd.p = p
+        dd.g = g
+        return dd
 
     @staticmethod
     def from_dict(dhp):
@@ -197,11 +208,7 @@ class PKAuthenticator(asn1core.Sequence):
 
 class AuthPack(asn1core.Sequence):
     _fields = [
-        (
-            "pkAuthenticator",
-            PKAuthenticator,
-            {"tag_type": "explicit", "tag": 0},
-        ),
+        ("pkAuthenticator", PKAuthenticator, {"tag_type": "explicit", "tag": 0}),
         (
             "clientPublicValue",
             asn1keys.PublicKeyInfo,
@@ -244,10 +251,7 @@ def sign_authpack(
     signer_info["signed_attrs"] = [
         asn1cms.CMSAttribute({"type": "content_type", "values": ["1.3.6.1.5.2.3.1"]}),
         asn1cms.CMSAttribute(
-            {
-                "type": "message_digest",
-                "values": [hash_digest(data, hashes.SHA1)],
-            }
+            {"type": "message_digest", "values": [hash_digest(data, hashes.SHA1)]}
         ),
     ]
     signer_info["signature_algorithm"] = asn1algos.SignedDigestAlgorithm(
@@ -282,99 +286,79 @@ def sign_authpack(
 def build_pkinit_as_req(
     username: str, domain: str, key: rsa.RSAPrivateKey, cert: x509.Certificate
 ) -> Tuple[AS_REQ, DirtyDH]:
-    as_req = AS_REQ()
-
-    server_name = Principal(
-        "krbtgt/%s" % domain,
-        type=constants.PrincipalNameType.NT_PRINCIPAL.value,
-    )
-    client_name = Principal(
-        username, type=constants.PrincipalNameType.NT_PRINCIPAL.value
-    )
-
-    pac_request = KERB_PA_PAC_REQUEST()
-    pac_request["include-pac"] = True
-    encoded_pac_request = encoder.encode(pac_request)
-
-    as_req["pvno"] = 5
-    as_req["msg-type"] = int(constants.ApplicationTagNumbers.AS_REQ.value)
-
-    req_body = seq_set(as_req, "req-body")
-
-    opts = []
-    opts.append(constants.KDCOptions.forwardable.value)
-    opts.append(constants.KDCOptions.renewable.value)
-    opts.append(constants.KDCOptions.proxiable.value)
-    req_body["kdc-options"] = constants.encodeFlags(opts)
-
-    seq_set(req_body, "sname", server_name.components_to_asn1)
-    seq_set(req_body, "cname", client_name.components_to_asn1)
-
-    req_body["realm"] = domain
-
     now = datetime.datetime.now(datetime.timezone.utc)
-    req_body["till"] = KerberosTime.to_asn1(now + datetime.timedelta(days=1))
-    req_body["rtime"] = KerberosTime.to_asn1(now + datetime.timedelta(days=1))
-    req_body["nonce"] = getrandbits(31)
 
-    supported_ciphers = (
-        int(constants.EncryptionTypes.aes256_cts_hmac_sha1_96.value),
-        int(constants.EncryptionTypes.aes128_cts_hmac_sha1_96.value),
+    kdc_req_body_data = {}
+    kdc_req_body_data["kdc-options"] = KDCOptions(
+        {"forwardable", "renewable", "renewable-ok"}
     )
+    kdc_req_body_data["cname"] = PrincipalName(
+        {"name-type": NAME_TYPE.PRINCIPAL.value, "name-string": [username]}
+    )
+    kdc_req_body_data["realm"] = domain.upper()
+    kdc_req_body_data["sname"] = PrincipalName(
+        {
+            "name-type": NAME_TYPE.SRV_INST.value,
+            "name-string": ["krbtgt", domain.upper()],
+        }
+    )
+    kdc_req_body_data["till"] = (now + datetime.timedelta(days=1)).replace(
+        microsecond=0
+    )
+    kdc_req_body_data["rtime"] = (now + datetime.timedelta(days=1)).replace(
+        microsecond=0
+    )
+    kdc_req_body_data["nonce"] = getrandbits(31)
+    kdc_req_body_data["etype"] = [18, 17]
 
-    seq_set_iter(req_body, "etype", supported_ciphers)
+    kdc_req_body = KDC_REQ_BODY(kdc_req_body_data)
 
-    encoded_req_body = encoder.encode(req_body)
+    checksum = hash_digest(kdc_req_body.dump(), hashes.SHA1)
 
-    checksum = hash_digest(encoded_req_body, hashes.SHA1)
+    authenticator = {}
+    authenticator["cusec"] = now.microsecond
+    authenticator["ctime"] = now.replace(microsecond=0)
+    authenticator["nonce"] = getrandbits(31)
+    authenticator["paChecksum"] = checksum
 
     diffie = DirtyDH.from_dict(DH_PARAMS)
 
-    authpack = AuthPack(
-        {
-            "pkAuthenticator": PKAuthenticator(
-                {
-                    "cusec": now.microsecond,
-                    "ctime": now.replace(microsecond=0),
-                    "nonce": getrandbits(31),
-                    "paChecksum": checksum,
-                }
-            ),
-            "clientPublicValue": asn1keys.PublicKeyInfo(
-                {
-                    "algorithm": asn1keys.PublicKeyAlgorithm(
-                        {
-                            "algorithm": "1.2.840.10046.2.1",
-                            "parameters": asn1keys.DomainParameters(
-                                {"p": diffie.p, "g": diffie.g, "q": 0}
-                            ),
-                        }
-                    ),
-                    "public_key": diffie.get_public_key(),
-                }
-            ),
-            "clientDHNonce": diffie.dh_nonce,
-        }
-    )
+    dp = {}
+    dp["p"] = diffie.p
+    dp["g"] = diffie.g
+    dp["q"] = 0
 
+    pka = {}
+    pka["algorithm"] = "1.2.840.10046.2.1"
+    pka["parameters"] = asn1keys.DomainParameters(dp)
+
+    spki = {}
+    spki["algorithm"] = asn1keys.PublicKeyAlgorithm(pka)
+    spki["public_key"] = diffie.get_public_key()
+
+    authpack = {}
+    authpack["pkAuthenticator"] = PKAuthenticator(authenticator)
+    authpack["clientPublicValue"] = asn1keys.PublicKeyInfo(spki)
+    authpack["clientDHNonce"] = diffie.dh_nonce
+
+    authpack = AuthPack(authpack)
     signed_authpack = sign_authpack(authpack.dump(), key, cert)
 
-    pa_pk_as_req = PA_PK_AS_REQ()
-    pa_pk_as_req["signedAuthPack"] = signed_authpack
-    encoded_pa_pk_as_req = pa_pk_as_req.dump()
+    payload = PA_PK_AS_REQ()
+    payload["signedAuthPack"] = signed_authpack
 
-    as_req["padata"] = noValue
+    pa_data_1 = {}
+    pa_data_1["padata-type"] = constants.PreAuthenticationDataTypes.PA_PK_AS_REQ.value
+    pa_data_1["padata-value"] = payload.dump()
 
-    as_req["padata"][0] = noValue
-    as_req["padata"][0]["padata-type"] = int(
-        constants.PreAuthenticationDataTypes.PA_PAC_REQUEST.value
-    )
-    as_req["padata"][0]["padata-value"] = encoded_pac_request
+    pa_data_0 = {}
+    pa_data_0["padata-type"] = constants.PreAuthenticationDataTypes.PA_PAC_REQUEST.value
+    pa_data_0["padata-value"] = PA_PAC_REQUEST({"include-pac": True}).dump()
 
-    as_req["padata"][1] = noValue
-    as_req["padata"][1]["padata-type"] = int(
-        constants.PreAuthenticationDataTypes.PA_PK_AS_REQ.value
-    )
-    as_req["padata"][1]["padata-value"] = encoded_pa_pk_as_req
+    asreq = {}
+    asreq["pvno"] = 5
+    asreq["msg-type"] = 10
+    asreq["padata"] = [pa_data_0, pa_data_1]
+    asreq["req-body"] = kdc_req_body
 
-    return as_req, diffie
+    return AS_REQ(asreq).dump(), diffie
