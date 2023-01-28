@@ -157,14 +157,6 @@ def get_cli_args():
         help="IP Address of the domain controller. If omitted it will use "
         "the domain part (FQDN) specified in the target parameter",
     )
-    group_auth.add_argument(
-        "-s",
-        "--stealth",
-        action="store_true",
-        default=False,
-        help="If set, the agent will be executed by modifying an existing "
-        " service (RasAuto) rather than created a random one",
-    ),
     group_connect.add_argument(
         "-ca",
         "--certificate-authority",
@@ -196,6 +188,14 @@ def get_cli_args():
         default=False,
         help="If enabled, the Masky agent will load arguments from an "
         " automatically generated file (useful when packed or using a loader)",
+    )
+    group_custom_agent.add_argument(
+        "-s",
+        "--stealth",
+        action="store_true",
+        default=False,
+        help="If set, the agent will be executed by modifying an existing "
+        " service (RasAuto) rather than created a random one",
     )
     # Results attributes
     group_results = parser.add_argument_group("Results")
