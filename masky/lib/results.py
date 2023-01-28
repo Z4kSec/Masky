@@ -84,5 +84,6 @@ class User:
             self.cert_from_pem, self.pk_from_pem
         )
         self.upn = f"{self.name}@{self.domain}".lower()
+        self.lm_hash = ""
         self.nt_hash = ""
         self.ccache = ""

