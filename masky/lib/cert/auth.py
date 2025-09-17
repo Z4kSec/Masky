@@ -149,7 +149,7 @@ class Authenticate:
                 try:
                     self.dc_ip = socket.gethostbyname(self.dc_domain)
                 except:
-                    err_msg = "The provided DC IP is invalid / not set and the domain could not been resolved"
+                    err_msg = "The provided DC IP is invalid/unset and the domain could not be resolved"
                     logger.error(err_msg)
                     self.tracker.last_error_msg = err_msg
                     return False
@@ -425,7 +425,7 @@ class Authenticate:
 
             if not is_key_credential:
                 logger.result(
-                    f"Gathered NT hash for the user '{domain}\{username}': {nt_hash}"
+                    fr"Gathered NT hash for the user '{domain}\{username}': {nt_hash}"
                 )
                 self.user.lm_hash = lm_hash
                 self.user.nt_hash = nt_hash

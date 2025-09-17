@@ -88,7 +88,7 @@ class Console:
         cli_parser = get_cli_args()
         self.__opts = Options(cli_parser)
         if not self.__opts.process():
-            logger.error("The provided options are invalids")
+            logger.error("The provided options are invalid")
             return False
         self.__run()
         return True
@@ -102,7 +102,7 @@ class Console:
                 try:
                     self.__process_results(rslt)
                 except Exception as e:
-                    logger.warn(f"Fail to process results ({str(e)})")
+                    logger.warn(f"Failed to process results ({str(e)})")
         except KeyboardInterrupt:
             logger.warn(
                 "Multiple interruption signals were triggered, Masky is forced to exit without properly cleaning currently processed servers"

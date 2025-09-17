@@ -34,7 +34,7 @@ class MaskyResults:
                 users += user.split("'")[1] + " "
             if users:
                 logger.warning(
-                    f"Fail to retrieve a PEM from the provided template name for the following users: {users}"
+                    f"Failed to retrieve a PEM from the provided template name for the following users: {users}"
                 )
 
         if self.json_data:
@@ -57,7 +57,7 @@ class MaskyResults:
             err_msg = f"The Masky agent execution failed due to the following errors:\n{self.errors}"
             logger.debug(err_msg)
             self.tracker.last_error_msg = (
-                f"The Masky agent execution failed, probably empty certificates"
+                f"The Masky agent execution failed, probably due to empty certificates"
             )
         else:
             self.tracker.last_error_msg = (

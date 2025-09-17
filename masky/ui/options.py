@@ -161,7 +161,7 @@ def get_cli_args():
         "-ca",
         "--certificate-authority",
         action="store",
-        help="Certificate Authority Name (SERVER\CA_NAME)",
+        help=r"Certificate Authority Name (SERVER\CA_NAME)",
         required=True,
     )
     group_connect.add_argument(

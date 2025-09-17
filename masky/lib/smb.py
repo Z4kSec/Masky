@@ -100,18 +100,18 @@ class Smb:
             self.__command = f'{self.__masky_remote_path} /ca:"{ca}" /template:"{template}" /output:"{self.__results_remote_path}" /debug:"{self.__errors_remote_path}"'
             self.__upload_masky(target)
             logger.debug(
-                f"Masky agent was successfuly uploaded in: '{self.__masky_remote_path}'"
+                f"Masky agent was successfully uploaded in: '{self.__masky_remote_path}'"
             )
         except Exception as e:
             err_msg = None
             if "STATUS_ACCESS_DENIED" in str(e):
-                err_msg = f"The user {self.__domain}\{self.__username} is not local administrator on this system"
+                err_msg = fr"The user {self.__domain}\{self.__username} is not a local administrator on this system"
                 logger.warn(err_msg)
             elif "STATUS_LOGON_FAILURE" in str(e):
-                err_msg = f"The provided credentials for the user '{self.__domain}\{self.__username}' are invalids or the user does not exist"
+                err_msg = fr"The provided credentials for the user '{self.__domain}\{self.__username}' are invalid or the user does not exist"
                 logger.error(err_msg)
             else:
-                err_msg = f"Fail to upload the agent ({str(e)})"
+                err_msg = f"Failed to upload the agent ({str(e)})"
                 logger.error(err_msg)
             self.__tracker.last_error_msg = err_msg
             raise Exception
@@ -121,14 +121,14 @@ class Smb:
             if self.__stealth:
                 self.__edit_svc()
                 logger.debug(
-                    f"The service '{self.__svc_name}' was successfuly modified"
+                    f"The service '{self.__svc_name}' was successfully modified"
                 )
             else:
                 self.__create_svc()
-                logger.debug(f"The service '{self.__svc_name}' was successfuly created")
+                logger.debug(f"The service '{self.__svc_name}' was successfully created")
         except Exception as e:
             err_msg = (
-                f"Fail to edit or create the '{self.__svc_name}' service via DCERPC"
+                f"Failed to edit or create the '{self.__svc_name}' service via DCERPC"
             )
             logger.error(err_msg)
             self.__tracker.last_error_msg = err_msg
@@ -211,7 +211,7 @@ class Smb:
         except:
             self.__tracker.files_cleaning_success = False
             logger.warn(
-                f"Fail to remove Masky agent located in: {self.__masky_remote_path}"
+                f"Failed to remove Masky agent located in: {self.__masky_remote_path}"
             )
 
         if self.__file_args:
@@ -220,7 +220,7 @@ class Smb:
             except:
                 self.__tracker.files_cleaning_success = False
                 logger.warn(
-                    f"Fail to remove Masky agent arguments file located in: {self.__args_path}"
+                    f"Failed to remove Masky agent arguments file located in: {self.__args_path}"
                 )
 
         smbclient.close()
@@ -261,7 +261,7 @@ class Smb:
         except:
             self.__tracker.files_cleaning_success = False
             logger.warn(
-                f"Fail to remove Masky agent output file located in: {self.__results_remote_path}"
+                f"Failed to remove Masky agent output file located in: {self.__results_remote_path}"
             )
 
         try:
@@ -271,7 +271,7 @@ class Smb:
                 rslt.parse_agent_errors,
             )
             if rslt.errors:
-                err_msg = f"The Masky agent execution failed, enable the debugging to display the stacktrace"
+                err_msg = f"The Masky agent execution failed, enable debugging to display the stacktrace"
                 logger.error(err_msg)
         except:
             logger.warn("No Masky agent error file was downloaded")
@@ -280,7 +280,7 @@ class Smb:
         except:
             self.__tracker.files_cleaning_success = False
             logger.warn(
-                f"Fail to remove Masky agent error file located in: {self.__errors_remote_path}"
+                f"Failed to remove Masky agent error file located in: {self.__errors_remote_path}"
             )
 
         if rslt.json_data and len(rslt.json_data) == 0:
@@ -295,7 +295,7 @@ class Smb:
         return rslt
 
     def __init_rpc(self, target_host):
-        np_bind = f"ncacn_np:{target_host}[\pipe\svcctl]"
+        np_bind = fr"ncacn_np:{target_host}[\pipe\svcctl]"
         self.__rpc_con = transport.DCERPCTransportFactory(np_bind)
         self.__rpc_con.set_dport(self.__port)
         self.__rpc_con.setRemoteHost(target_host)
@@ -385,7 +385,7 @@ class Smb:
         except Exception as e:
             self.__tracker.svc_cleaning_success = False
             logger.warn(
-                f"Fail to revert '{self.__svc_name}' service binary path ({str(e)}])"
+                f"Failed to revert '{self.__svc_name}' service binary path ({str(e)}])"
             )
 
     def __remove_svc(self):
@@ -397,7 +397,7 @@ class Smb:
             )
         except Exception as e:
             self.__tracker.svc_cleaning_success = False
-            logger.warn(f"Fail to remove '{self.__svc_name}' service ({str(e)}])")
+            logger.warn(f"Failed to remove '{self.__svc_name}' service ({str(e)}])")
 
     def __clean(self, target_host):
         try:
@@ -418,7 +418,7 @@ class Smb:
             except Exception as e:
                 self.__tracker.svc_cleaning_success = False
                 logger.warning(
-                    f"An unknown error occured while trying to revert or remove '{self.__svc_name}' ({str(e)})"
+                    f"An unknown error occurred while trying to revert or remove '{self.__svc_name}' ({str(e)})"
                 )
         try:
             scmr.hRControlService(
@@ -431,4 +431,4 @@ class Smb:
             self.__remove_masky(target_host)
         except Exception as e:
             self.__tracker.files_cleaning_success = False
-            logger.warn(f"Fail to remove Masky related files on the target ({str(e)}")
+            logger.warn(f"Failed to remove Masky related files on the target ({str(e)}")

@@ -26,11 +26,11 @@ Masky has been designed as a Python library. Moreover, a command line interface 
 
 For both usages, you need first to retrieve the FQDN of a `CA server` and its `CA name` deployed via an ADCS. This information can be easily retrieved via the `certipy find` option or via the Microsoft built-in `certutil.exe` tool. Make sure that the default `User` template is enabled on the targeted CA.
 
-Warning: Masky deploys an executable on each target via a modification of the existing `RasAuto` service. Despite the automated roll-back of its intial `ImagePath` value, an unexpected error during Masky runtime could skip the cleanup phase. Therefore, do not forget to manually reset the original value in case of such unwanted stop.
+Warning: Masky deploys an executable on each target via a modification of the existing `RasAuto` service. Despite the automated roll-back of its initial `ImagePath` value, an unexpected error during Masky runtime could skip the cleanup phase. Therefore, do not forget to manually reset the original value in case of such unwanted stop.
 
 ### Command line
 
-The following demo shows a basic usage of Masky by targeting 4 remote systems. Its execution allows to collect NT hashes, CCACHE and PFX of 3 distincts domain users from the sec.lab testing domain.
+The following demo shows a basic usage of Masky by targeting 4 remote systems. Its execution allows to collect NT hashes, CCACHE and PFX of 3 distinct domain users from the sec.lab testing domain.
 
 <p align="center">
   <img src="./assets/masky_demo.gif" alt="Masky CLI demo" />
@@ -107,12 +107,12 @@ def dump_nt_hashes():
     target = "192.168.23.130"
     rslts = m.run(target)
 
-    # Check if Masky succesfully hijacked at least a user session
-    # or if an unexpected error occured
+    # Check if Masky successfully hijacked at least a user session
+    # or if an unexpected error occurred
     if not rslts:
         return False
 
-    # Loop on MaskyResult object to display hijacked users and to retreive their NT hashes
+    # Loop on MaskyResult object to display hijacked users and to retrieve their NT hashes
     print(f"Results from hostname: {rslts.hostname}")
     for user in rslts.users:
         print(f"\t - {user.domain}\{user.name} - {user.nt_hash}")
