@@ -12,6 +12,7 @@ setup(
     description="Python library with CLI allowing to remotely dump domain user credentials via an ADCS",
     long_description=README,
     long_description_content_type="text/markdown",
+    url="https://github.com/Z4kSec/Masky",
     license="MIT",
     author="Zak",
     python_requires=">=3.6",
