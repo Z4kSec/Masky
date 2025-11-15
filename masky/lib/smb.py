@@ -3,7 +3,10 @@ import string
 import random
 from .results import MaskyResults
 from ..utils.toolbox import FakeBufferReader
-from pkg_resources import resource_filename
+try:
+    from importlib.resources import files
+except ImportError:
+    from importlib_resources import files
 from impacket.dcerpc.v5 import transport, scmr
 from impacket.smbconnection import SMBConnection
 from impacket.dcerpc.v5.ndr import NULL
@@ -72,7 +75,7 @@ class Smb:
         if self.__exe_path:
             self.__masky_local_path = self.__exe_path
         else:
-            self.__masky_local_path = resource_filename("masky.bin", "Masky.exe")
+            self.__masky_local_path = str(files('masky').joinpath('bin', 'Masky.exe'))
 
         logger.debug(
             f"The Masky agent binary will be uploaded in: {self.__masky_remote_path}"

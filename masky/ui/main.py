@@ -4,7 +4,7 @@ import sys
 from ..utils.logger import load_custom_logger
 from .console import Console
 
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 logger = logging.getLogger("masky")
 
 
