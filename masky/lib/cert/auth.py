@@ -425,7 +425,7 @@ class Authenticate:
 
             if not is_key_credential:
                 logger.result(
-                    f"Gathered NT hash for the user '{domain}\{username}': {nt_hash}"
+                    f"Gathered NT hash for the user '{domain}\\{username}': {nt_hash}"
                 )
                 self.user.lm_hash = lm_hash
                 self.user.nt_hash = nt_hash

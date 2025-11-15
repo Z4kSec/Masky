@@ -105,15 +105,15 @@ class Masky:
 
         for user_data in rslt.users:
             logger.debug(
-                f"Start processing PFX of the user '{user_data.domain}\{user_data.name}'"
+                f"Start processing PFX of the user '{user_data.domain}\\{user_data.name}'"
             )
             if not self.__process_certificate(user_data):
                 logger.warn(
-                    f"Fail to process gathered certificate related to the user '{user_data.domain}\{user_data.name}'"
+                    f"Fail to process gathered certificate related to the user '{user_data.domain}\\{user_data.name}'"
                 )
             else:
                 logger.debug(
-                    f"End processing PFX of the user '{user_data.domain}\{user_data.name}'"
+                    f"End processing PFX of the user '{user_data.domain}\\{user_data.name}'"
                 )
         return rslt
 

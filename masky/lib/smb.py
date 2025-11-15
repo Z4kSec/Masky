@@ -100,15 +100,15 @@ class Smb:
             self.__command = f'{self.__masky_remote_path} /ca:"{ca}" /template:"{template}" /output:"{self.__results_remote_path}" /debug:"{self.__errors_remote_path}"'
             self.__upload_masky(target)
             logger.debug(
-                f"Masky agent was successfuly uploaded in: '{self.__masky_remote_path}'"
+                f"Masky agent was successfully uploaded in: '{self.__masky_remote_path}'"
             )
         except Exception as e:
             err_msg = None
             if "STATUS_ACCESS_DENIED" in str(e):
-                err_msg = f"The user {self.__domain}\{self.__username} is not local administrator on this system"
+                err_msg = f"The user {self.__domain}\\{self.__username} is not local administrator on this system"
                 logger.warn(err_msg)
             elif "STATUS_LOGON_FAILURE" in str(e):
-                err_msg = f"The provided credentials for the user '{self.__domain}\{self.__username}' are invalids or the user does not exist"
+                err_msg = f"The provided credentials for the user '{self.__domain}\\{self.__username}' are invalids or the user does not exist"
                 logger.error(err_msg)
             else:
                 err_msg = f"Fail to upload the agent ({str(e)})"
@@ -121,11 +121,11 @@ class Smb:
             if self.__stealth:
                 self.__edit_svc()
                 logger.debug(
-                    f"The service '{self.__svc_name}' was successfuly modified"
+                    f"The service '{self.__svc_name}' was successfully modified"
                 )
             else:
                 self.__create_svc()
-                logger.debug(f"The service '{self.__svc_name}' was successfuly created")
+                logger.debug(f"The service '{self.__svc_name}' was successfully created")
         except Exception as e:
             err_msg = (
                 f"Fail to edit or create the '{self.__svc_name}' service via DCERPC"
@@ -418,7 +418,7 @@ class Smb:
             except Exception as e:
                 self.__tracker.svc_cleaning_success = False
                 logger.warning(
-                    f"An unknown error occured while trying to revert or remove '{self.__svc_name}' ({str(e)})"
+                    f"An unknown error occurred while trying to revert or remove '{self.__svc_name}' ({str(e)})"
                 )
         try:
             scmr.hRControlService(
